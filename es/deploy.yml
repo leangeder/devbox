@@ -1,0 +1,297 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: elasticsearch-master
+  labels:
+    infra: s8
+    role: backend
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 10%
+      maxSurge: 10%
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+        role: elasticsearch-master
+    spec:
+      serviceAccountName: elasticsearch
+      initContainers:
+      - name: sysctl
+        image: "busybox"
+        imagePullPolicy: IfNotPresent
+        command: ["sysctl", "-w", "vm.max_map_count=262144"]
+        securityContext:
+          privileged: true
+      containers:
+      - name: elasticsearch
+        image: 'docker.elastic.co/elasticsearch/elasticsearch:5.2.2'
+        imagePullPolicy: IfNotPresent
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - >
+                cat /tmp/elasticsearch/elasticsearch.yml > /usr/share/elasticsearch/config/elasticsearch.yml;
+                sed -i -e "s/##LOCATION##/$(echo $NODE_NAME | cut -d - -f3)/g" /usr/share/elasticsearch/config/elasticsearch.yml;
+                sed -i -e "s/##ENV##/$(echo $NODE_NAME | cut -d - -f2)/g" /usr/share/elasticsearch/config/elasticsearch.yml;
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          successThreshold: 1
+          tcpSocket:
+            port: 9300
+          timeoutSeconds: 5
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 2
+          successThreshold: 1
+          tcpSocket:
+            port: 9300
+          timeoutSeconds: 5
+        ports:
+        - name: transport
+          containerPort: 9300
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: ES_JAVA_OPTS
+          value: "-Xss1m -Xms4g -Xmx4g"
+        resources:
+          requests:
+            memory: 4Gi
+          limits:
+            memory: 8Gi
+        securityContext:
+          capabilities:
+            add:
+            - IPC_LOCK
+            - SYS_RESOURCE
+          privileged: false
+        volumeMounts:
+        - name: current-config
+          mountPath: /tmp/elasticsearch
+      volumes:
+      - name: current-config
+        configMap:
+          name: config.general.elasticsearch
+          items:
+          - key: elasticsearch-master.yml
+            path: elasticsearch.yml
+          defaultMode: 420
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: elasticsearch-client
+  labels:
+    infra: s8
+    role: backend
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 10%
+      maxSurge: 10%
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+        role: elasticsearch-client
+    spec:
+      serviceAccountName: elasticsearch
+      initContainers:
+      - name: sysctl
+        image: "busybox"
+        imagePullPolicy: "Always"
+        command: ["sysctl", "-w", "vm.max_map_count=262144"]
+        securityContext:
+          privileged: true
+      containers:
+      - name: elasticsearch
+        image: 'docker.elastic.co/elasticsearch/elasticsearch:5.2.2'
+        imagePullPolicy: IfNotPresent
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - >
+                cat /tmp/elasticsearch/elasticsearch.yml > /usr/share/elasticsearch/config/elasticsearch.yml;
+                sed -i -e "s/##LOCATION##/$(echo $NODE_NAME | cut -d - -f3)/g" /usr/share/elasticsearch/config/elasticsearch.yml;
+                sed -i -e "s/##ENV##/$(echo $NODE_NAME | cut -d - -f2)/g" /usr/share/elasticsearch/config/elasticsearch.yml;
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          successThreshold: 1
+          tcpSocket:
+            port: 9200
+          timeoutSeconds: 5
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 2
+          successThreshold: 1
+          tcpSocket:
+            port: 9200
+          timeoutSeconds: 5
+        ports:
+        - name: http
+          containerPort: 9200
+        - name: transport
+          containerPort: 9300
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: ES_JAVA_OPTS
+          value: "-Xss1m -Xms4g -Xmx4g"
+        resources:
+          requests:
+            memory: 4Gi
+          limits:
+            memory: 8Gi
+        securityContext:
+          capabilities:
+            add:
+            - IPC_LOCK
+            - SYS_RESOURCE
+          privileged: false
+        volumeMounts:
+        - name: current-config
+          mountPath: /tmp/elasticsearch
+      volumes:
+      - name: current-config
+        configMap:
+          name: config.general.elasticsearch
+          items:
+          - key: elasticsearch-client.yml
+            path: elasticsearch.yml
+          defaultMode: 420
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: elasticsearch-data
+  labels:
+    infra: s8
+    role: backend
+spec:
+  replicas: 5
+  serviceName: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+        role: elasticsearch-data
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - elasticsearch
+              - key: role
+                operator: In
+                values:
+                - elasticsearch-data
+            topologyKey: kubernetes.io/hostname
+      initContainers:
+      - name: sysctl
+        image: "busybox"
+        imagePullPolicy: "Always"
+        command: ["sysctl", "-w", "vm.max_map_count=262144"]
+        securityContext:
+          privileged: true
+      containers:
+      - name: elasticsearch
+        image: 'docker.elastic.co/elasticsearch/elasticsearch:5.2.2'
+        imagePullPolicy: IfNotPresent
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - >
+                cat /tmp/elasticsearch/elasticsearch.yml > /usr/share/elasticsearch/config/elasticsearch.yml;
+                sed -i -e "s/##LOCATION##/$(echo $NODE_NAME | cut -d - -f3)/g" /usr/share/elasticsearch/config/elasticsearch.yml;
+                sed -i -e "s/##ENV##/$(echo $NODE_NAME | cut -d - -f2)/g" /usr/share/elasticsearch/config/elasticsearch.yml;
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          successThreshold: 1
+          tcpSocket:
+            port: 9300
+          timeoutSeconds: 5
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 2
+          successThreshold: 1
+          tcpSocket:
+            port: 9300
+          timeoutSeconds: 5
+        ports:
+        - name: transport
+          containerPort: 9300
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: ES_JAVA_OPTS
+          value: "-Xss1m -Xms12g -Xmx12g"
+        resources:
+          requests:
+            memory: 14Gi
+          limits:
+            memory: 24.2Gi
+        securityContext:
+          capabilities:
+            add:
+            - IPC_LOCK
+            - SYS_RESOURCE
+          privileged: false
+        volumeMounts:
+        - name: volume-elasticsearch
+          mountPath: /usr/share/elasticsearch/data
+        - name: current-config
+          mountPath: /tmp/elasticsearch
+      securityContext:
+        fsGroup: 2000
+      volumes:
+      - name: current-config
+        configMap:
+          name: config.general.elasticsearch
+          items:
+          - key: elasticsearch-data.yml
+            path: elasticsearch.yml
+          defaultMode: 420
+  volumeClaimTemplates:
+  - metadata:
+      name: volume-elasticsearch
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: fast
+      resources:
+        requests:
+          storage: 100Gi

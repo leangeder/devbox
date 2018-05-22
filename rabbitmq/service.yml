@@ -1,0 +1,18 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  namespace: test-rabbitmq
+  name: rabbitmq
+  labels:
+    app: rabbitmq
+    type: LoadBalancer
+spec:
+  type: NodePort
+  ports:
+   - name: http
+     port: 15672
+   - name: amqp
+     port: 5672
+  selector:
+    app: rabbitmq

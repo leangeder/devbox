@@ -1,0 +1,90 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config.general.elasticsearch
+data:
+  elasticsearch-master.yml: |
+    cluster.name: s8-##LOCATION##-##ENV##
+    discovery.zen.ping.unicast.hosts: elasticsearch-master
+    discovery.zen.minimum_master_nodes: 3
+    discovery.zen.fd.ping_timeout: 30s
+    node.name: ${HOSTNAME}
+    network.host: 0.0.0.0
+    xpack.security.enabled: false
+    xpack.monitoring.enabled: false
+    xpack.watcher.enabled: false
+    script.inline: true
+    script.max_compilations_per_minute: 500000
+    thread_pool.search.size: 20
+    thread_pool.search.queue_size: 100
+    thread_pool.bulk.size: 9
+    thread_pool.bulk.queue_size: 300
+    thread_pool.index.size: 9
+    thread_pool.index.queue_size: 100
+    indices.memory.index_buffer_size: 30%
+    indices.memory.min_index_buffer_size: 96mb
+    indices.fielddata.cache.size: 15%
+    indices.store.throttle.max_bytes_per_sec: 100mb
+    indices.store.throttle.type: none
+    # bootstrap.memory_lock: true
+    node.master: true
+    node.ingest: false
+    node.data: false
+    http.enabled: false
+  elasticsearch-client.yml: |
+    cluster.name: s8-##LOCATION##-##ENV##
+    discovery.zen.ping.unicast.hosts: elasticsearch-master
+    discovery.zen.minimum_master_nodes: 3
+    discovery.zen.fd.ping_timeout: 30s
+    node.name: ${HOSTNAME}
+    network.host: 0.0.0.0
+    xpack.security.enabled: false
+    xpack.monitoring.enabled: false
+    xpack.watcher.enabled: false
+    script.inline: true
+    script.max_compilations_per_minute: 500000
+    thread_pool.search.size: 20
+    thread_pool.search.queue_size: 100
+    thread_pool.bulk.size: 9
+    thread_pool.bulk.queue_size: 300
+    thread_pool.index.size: 9
+    thread_pool.index.queue_size: 100
+    indices.memory.index_buffer_size: 30%
+    indices.memory.min_index_buffer_size: 96mb
+    indices.fielddata.cache.size: 15%
+    indices.store.throttle.max_bytes_per_sec: 100mb
+    indices.store.throttle.type: none
+    # bootstrap.memory_lock: true
+    node.master: false
+    node.ingest: true
+    node.data: false
+    http.enabled: true
+  elasticsearch-data.yml: |
+    cluster.name: s8-##LOCATION##-##ENV##
+    discovery.zen.ping.unicast.hosts: elasticsearch-master
+    discovery.zen.minimum_master_nodes: 3
+    discovery.zen.fd.ping_timeout: 30s
+    node.name: ${HOSTNAME}
+    network.host: 0.0.0.0
+    xpack.security.enabled: false
+    xpack.monitoring.enabled: false
+    xpack.watcher.enabled: false
+    script.inline: true
+    script.max_compilations_per_minute: 500000
+    thread_pool.search.size: 20
+    thread_pool.search.queue_size: 100
+    thread_pool.bulk.size: 9
+    thread_pool.bulk.queue_size: 300
+    thread_pool.index.size: 9
+    thread_pool.index.queue_size: 100
+    indices.memory.index_buffer_size: 30%
+    indices.memory.min_index_buffer_size: 96mb
+    indices.fielddata.cache.size: 15%
+    indices.store.throttle.max_bytes_per_sec: 100mb
+    indices.store.throttle.type: none
+    # bootstrap.memory_lock: true
+    node.master: false
+    node.ingest: false
+    node.data: true
+    http.enabled: false
