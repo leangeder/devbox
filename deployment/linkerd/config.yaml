@@ -1,0 +1,197 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: l5d-config
+  namespace: linkerd
+data:
+  config.yaml: |-
+    admin:
+      ip: 0.0.0.0
+      port: 9990
+
+    namers:
+    - kind: io.l5d.k8s
+      host: localhost
+      port: 8001
+
+    telemetry:
+    - kind: io.l5d.prometheus
+    - kind: io.l5d.zipkin
+      host: zipkin-collector
+      port: 9410
+      sampleRate: 1.0
+    - kind: io.l5d.recentRequests
+      sampleRate: 0.25
+
+    usage:
+      orgId: linkerd-examples-daemonset-ingress
+
+    routers:
+    - protocol: http
+      label: ingress
+      dtab: |
+        /srv                      => /#/io.l5d.k8s/preview ;
+        /domain/local/beamery     => /srv/app-site-ng2/app-site-ng2 ;
+        /domain/local/beamery/api => /srv/api-core/api-core ;
+        /host                     => /$/io.buoyant.http.domainToPathPfx/domain ;
+        /svc                      => /host ;
+        # /svc/beamery.local      => /domain/local/beamery;
+      interpreter:
+        kind: default
+        transformers:
+        - kind: io.l5d.k8s.daemonset
+          namespace: linkerd
+          port: incoming
+          service: l5d
+      servers:
+      - port: 4142
+        ip: 0.0.0.0
+
+    - protocol: http
+      label: outgoing
+      dtab: |
+        /srv                    => /#/io.l5d.k8s ;
+        /host                   => /srv ;
+        /svc                    => /host ;
+        # /host/api-core          => /srv/preview/api-core/api-core ;
+      interpreter:
+        kind: default
+        transformers:
+        - kind: io.l5d.k8s.daemonset
+          namespace: linkerd
+          port: incoming
+          service: l5d
+      servers:
+      - port: 4140
+        ip: 0.0.0.0
+      service:
+        responseClassifier:
+          kind: io.l5d.http.retryableRead5XX
+
+    - protocol: http
+      label: incoming
+      dtab: |
+        /srv                      => /#/io.l5d.k8s ;
+        /domain/local/beamery     => /srv/preview/app-site-ng2/app-site-ng2 ;
+        /domain/local/beamery/api => /srv/preview/api-core/api-core ;
+        /host                     => /$/io.buoyant.http.domainToPathPfx/domain ;
+        /host                     => /srv ;
+        /svc                      => /host ;
+        # /host/api-core            => /srv/preview/api-core/api-core ;
+      interpreter:
+        kind: default
+        transformers:
+        - kind: io.l5d.k8s.localnode
+      servers:
+      - port: 4141
+        ip: 0.0.0.0
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: l5d-tcp-config
+  namespace: linkerd
+data:
+  config.yaml: |
+    admin:
+      ip: 0.0.0.0
+      port: 9989
+
+    routers:
+    - label: redis
+      interpreter:
+        kind: io.l5d.namerd.http
+        baseUrl: http://namerd:4180
+        namespace: linkerd
+        periodSecs: 20
+      servers:
+      - port: 7474
+        ip: 0.0.0.0
+        # dstName: /$/inet/redis-cluster-0.redis/6383
+        # dstName: /svc/redis-cluster
+        dstName: /#/io.l5d.k8s/redis/client/redis-cluster
+      client:
+        kind: io.l5d.global
+        minConnections: 3
+        connectTimeoutMs: 500
+    - label: mongodb
+      interpreter:
+        kind: io.l5d.namerd.http
+        baseUrl: http://namerd:4180
+        namespace: linkerd
+        periodSecs: 20
+      servers:
+      - port: 7484
+        ip: 0.0.0.0
+        # dstName: /$/inet/redis-cluster-0.redis/6383
+        # dstName: /svc/mongodb
+        dstName: /#/io.l5d.k8s/mongodb/mongo/mongodb
+      client:
+        kind: io.l5d.global
+        minConnections: 3
+        connectTimeoutMs: 500
+    - label: rabbitmq
+      interpreter:
+        kind: io.l5d.namerd.http
+        baseUrl: http://namerd:4180
+        namespace: linkerd
+        periodSecs: 20
+      servers:
+      - port: 7494
+        ip: 0.0.0.0
+        # dstName: /$/inet/redis-cluster-0.redis/6383
+        # dstName: /svc/rabbit-server
+        dstName: /#/io.l5d.k8s/rabbitmq/amqp/rabbitmq
+      client:
+        kind: io.l5d.global
+        minConnections: 3
+        connectTimeoutMs: 500
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: namerd-config
+  namespace: linkerd
+data:
+  config.yaml: |
+    admin:
+      ip: 0.0.0.0
+      port: 9991
+
+    namers:
+    - kind: io.l5d.k8s
+      experimental: true
+      host: 127.0.0.1
+      port: 8001
+
+    storage:
+      kind: io.l5d.k8s
+      host: 127.0.0.1
+      port: 8001
+      namespace: linkerd
+
+    interfaces:
+    - kind: io.l5d.thriftNameInterpreter
+      ip: 0.0.0.0
+      port: 4100
+    - kind: io.l5d.httpController
+      ip: 0.0.0.0
+      port: 4180
+    - kind: io.l5d.mesh
+      ip: 0.0.0.0
+      port: 4321
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: dtabs.l5d.io
+  namespace: linkerd
+spec:
+  scope: Namespaced
+  group: l5d.io
+  version: v1alpha1
+  names:
+    kind: DTab
+    plural: dtabs
+    singular: dtab

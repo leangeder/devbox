@@ -1,0 +1,112 @@
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: redis-cluster
+  namespace: {{.redis.namespace}}
+  labels:
+    app: redis-cluster
+spec:
+  serviceName: redis-cluster
+  replicas: {{.redis.replica}}
+  podManagementPolicy: "Parallel"
+  template:
+    metadata:
+      labels:
+        app: redis-cluster
+    spec:
+      initContainers:
+      - name: init-sysctl
+        image: busybox
+        imagePullPolicy: IfNotPresent
+        command:
+        - "/bin/sh"
+        - "-c"
+        - >
+          sysctl -w net.core.somaxconn=65535;
+        securityContext:
+          privileged: true
+      containers:
+      - name: redis
+        image: {{.redis.image}}
+        ports:
+        - name: client
+          containerPort: 6379
+        - name: gossip
+          containerPort: 16379
+        command:
+        - redis-server
+        args:
+        - /usr/local/etc/redis/redis.conf
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "redis-cli -h $(hostname) ping"
+          initialDelaySeconds: 15
+          timeoutSeconds: 5
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "redis-cli -h $(hostname) ping"
+          initialDelaySeconds: 20
+          periodSeconds: 3
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "100Mi"
+        volumeMounts:
+        - name: conf
+          mountPath: /usr/local/etc/redis/redis.conf
+          subPath: redis.conf
+      volumes:
+      - name: conf
+        configMap:
+          name: "redis-cluster-config"
+          items:
+          - key: redis.conf
+            path: redis.conf
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: redis-cluster-monitor
+  namespace: {{.redis.namespace}}
+  labels:
+    app: redis-cluster-monitor
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: redis-cluster-monitor
+    spec:
+      volumes:
+      - name: conf
+        configMap:
+          name: "redis-cluster-config"
+          items:
+          - key: bootstrap-pod.sh
+            path: bootstrap-pod.sh
+      containers:
+      - name: cluster
+        image: ruby
+        command:
+        - sh
+        args:
+        - /conf/bootstrap-pod.sh
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "100Mi"
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        volumeMounts:
+        - name: conf
+          mountPath: /conf

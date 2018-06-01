@@ -1,0 +1,68 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elasticconfig
+  namespace: {{.elasticsearch.namespace}}
+  labels:
+    component: elasticsearch
+    role: config
+data:
+  elasticsearch.yml: |
+    cluster:
+      name: ${CLUSTER_NAME}
+
+    node:
+      master: ${NODE_MASTER}
+      data: ${NODE_DATA}
+      name: ${NODE_NAME}
+      ingest: ${NODE_INGEST}
+      max_local_storage_nodes: ${MAX_LOCAL_STORAGE_NODES}
+
+    network.host: ${NETWORK_HOST}
+
+    path:
+      data: /data/data
+      logs: /data/log
+      repo: /data/repo
+
+{{- if not .dev }}
+    # transport
+    searchguard.ssl.transport.enabled: true
+    searchguard.ssl.transport.keystore_filepath: certs/keystore.jks
+    searchguard.ssl.transport.keystore_alias: cert
+    searchguard.ssl.transport.resolve_hostname: false
+    searchguard.ssl.transport.keystore_password: qwerty
+    searchguard.ssl.transport.truststore_filepath: certs/truststore.jks
+    searchguard.ssl.transport.truststore_password: qwerty
+    searchguard.ssl.transport.truststore_alias: ca
+    searchguard.ssl.transport.enforce_hostname_verification: false
+    searchguard.ssl.transport.enable_openssl_if_available: true
+    searchguard.ssl.transport.keystore_type: JKS
+    searchguard.ssl.transport.truststore_type: JKS
+    # Restful
+    searchguard.ssl.http.enabled: true
+    searchguard.ssl.http.keystore_type: JKS
+    searchguard.ssl.http.keystore_filepath: certs/keystore.jks
+    searchguard.ssl.http.keystore_password: qwerty
+    searchguard.ssl.http.truststore_type: JKS
+    searchguard.ssl.http.truststore_alias: ca
+    searchguard.ssl.http.truststore_filepath: certs/truststore.jks
+    searchguard.ssl.http.truststore_password: qwerty
+    searchguard.ssl.http.enable_openssl_if_available: true
+{{- end }} 
+
+    bootstrap:
+      memory_lock: ${MEMORY_LOCK}
+
+    http:
+      enabled: ${HTTP_ENABLE}
+      compression: true
+      cors:
+        enabled: ${HTTP_CORS_ENABLE}
+        allow-origin: ${HTTP_CORS_ALLOW_ORIGIN}
+
+    discovery:
+      zen:
+        ping.unicast.hosts: ${DISCOVERY_SERVICE}
+        minimum_master_nodes: ${NUMBER_OF_MASTERS}

@@ -1,0 +1,74 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: l5d-ingress
+  # name: linkerd-ingress
+  namespace: {{.linkerd.namespace}}
+spec:
+  type: LoadBalancer
+  ports:
+  - name: ingress
+    port: 80
+  - name: admin
+    port: 9990
+  selector:
+    app: l5d
+    # app: linkerd
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: l5d
+  # name: linkerd
+  namespace: {{.linkerd.namespace}}
+spec:
+  # type: LoadBalancer
+  ports:
+  - name: outgoing
+    port: 4140
+  - name: incoming
+    port: 4141
+  selector:
+    app: l5d
+    # app: linkerd
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: l5d-tcp
+  # name: linkerd-tcp
+  namespace: {{.linkerd.namespace}}
+spec:
+  clusterIP: None
+  # type: LoadBalancer
+  type: ClusterIP
+  ports:
+  - name: admin
+    port: 9992
+  - name: redis
+    port: 7474
+  - name: mongodb
+    port: 7484
+  - name: rabbitmq
+    port: 7494
+  selector:
+    app: linkerd-tcp
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: namerd
+  namespace: {{.linkerd.namespace}}
+spec:
+  ports:
+  - name: thrift
+    port: 4100
+  - name: http
+    port: 4180
+  - name: mesh
+    port: 4321
+  - name: admin
+    port: 9991
+  selector:
+    app: namerd
