@@ -41,16 +41,16 @@ spec:
           containerPort: 5672
         - name: epmd
           containerPort: 4369
-        livenessProbe:
-          exec:
-            command: ["rabbitmqctl", "status"]
-          initialDelaySeconds: 30
-          timeoutSeconds: 5
-        readinessProbe:
-          exec:
-            command: ["rabbitmqctl", "status"]
-          initialDelaySeconds: 10
-          timeoutSeconds: 5
+        # livenessProbe:
+        #   exec:
+        #     command: ["rabbitmqctl", "status"]
+        #   initialDelaySeconds: 30
+        #   timeoutSeconds: 5
+        # readinessProbe:
+        #   exec:
+        #     command: ["rabbitmqctl", "status"]
+        #   initialDelaySeconds: 10
+        #   timeoutSeconds: 5
         env:
         - name: MY_POD_IP
           valueFrom:

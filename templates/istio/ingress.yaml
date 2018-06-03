@@ -1,0 +1,22 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: istio-test
+  annotations:
+    kubernetes.io/ingress.class: istio
+spec:
+  rules:
+  - host: beamery.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: app-site-ng2
+          servicePort: http
+  - host: api.beamery.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: api-core
+          servicePort: http

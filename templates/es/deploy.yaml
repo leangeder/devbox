@@ -67,21 +67,21 @@ spec:
               - IPC_LOCK
               - SYS_RESOURCE
         image: {{ $image }}
-        resources:
-          requests:
-{{- if ne $currentEsNode.resources.requests.memory "" }}
-            memory: "{{ $currentEsNode.resources.requests.memory }}"
-{{- end }}
-{{- if ne $currentEsNode.resources.requests.cpu "" }}
-            cpu: "{{ $currentEsNode.resources.requests.cpu }}"
-{{- end }}
-          limits:
-{{- if ne $currentEsNode.resources.limits.memory "" }}
-            memory: "{{ $currentEsNode.resources.limits.memory }}"
-{{- end }}
-{{- if ne $currentEsNode.resources.limits.cpu "" }}
-            cpu: "{{ $currentEsNode.resources.limits.cpu }}"
-{{- end }}
+#         resources:
+#           requests:
+# {{- if ne $currentEsNode.resources.requests.memory "" }}
+#             memory: "{{ $currentEsNode.resources.requests.memory }}"
+# {{- end }}
+# {{- if ne $currentEsNode.resources.requests.cpu "" }}
+#             cpu: "{{ $currentEsNode.resources.requests.cpu }}"
+# {{- end }}
+#           limits:
+# {{- if ne $currentEsNode.resources.limits.memory "" }}
+#             memory: "{{ $currentEsNode.resources.limits.memory }}"
+# {{- end }}
+# {{- if ne $currentEsNode.resources.limits.cpu "" }}
+#             cpu: "{{ $currentEsNode.resources.limits.cpu }}"
+# {{- end }}
         imagePullPolicy: IfNotPresent
         env:
         - name: NAMESPACE
@@ -205,21 +205,21 @@ spec:
             add:
               - IPC_LOCK
         image: {{ $image }}
-        resources:
-          requests:
-{{- if ne $currentEsNode.resources.requests.memory "" }}
-            memory: "{{ $currentEsNode.resources.requests.memory }}"
-{{- end }}
-{{- if ne $currentEsNode.resources.requests.cpu "" }}
-            cpu: "{{ $currentEsNode.resources.requests.cpu }}"
-{{- end }}
-          limits:
-{{- if ne $currentEsNode.resources.limits.memory "" }}
-            memory: "{{ $currentEsNode.resources.limits.memory }}"
-{{- end }}
-{{- if ne $currentEsNode.resources.limits.cpu "" }}
-            cpu: "{{ $currentEsNode.resources.limits.cpu }}"
-{{- end }}
+#         resources:
+#           requests:
+# {{- if ne $currentEsNode.resources.requests.memory "" }}
+#             memory: "{{ $currentEsNode.resources.requests.memory }}"
+# {{- end }}
+# {{- if ne $currentEsNode.resources.requests.cpu "" }}
+#             cpu: "{{ $currentEsNode.resources.requests.cpu }}"
+# {{- end }}
+#           limits:
+# {{- if ne $currentEsNode.resources.limits.memory "" }}
+#             memory: "{{ $currentEsNode.resources.limits.memory }}"
+# {{- end }}
+# {{- if ne $currentEsNode.resources.limits.cpu "" }}
+#             cpu: "{{ $currentEsNode.resources.limits.cpu }}"
+# {{- end }}
         imagePullPolicy: IfNotPresent
         env:
         - name: NAMESPACE

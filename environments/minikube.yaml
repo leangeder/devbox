@@ -107,13 +107,13 @@ linkerd:
   image: "buoyantio/linkerd:latest"
   namespace: "linkerd"
   replica: "1"
-  # resources:
-  #   requests:
-  #     cpu: 0.2m
-  #     memory: 200Mi
-  #   limits:
-  #     cpu: 1m
-  #     memory: 512Mi
+  resources:
+    requests:
+      cpu: 0.2m
+      memory: 200Mi
+    limits:
+      cpu: 1m
+      memory: 512Mi
 # }
 
 

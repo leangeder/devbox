@@ -36,11 +36,17 @@ spec:
               - IPC_LOCK
               - SYS_RESOURCE
         image: quay.io/pires/docker-elasticsearch:6.2.2
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "25m"
-          limits:
+#         resources:
+#           requests:
+#
+#             memory: "512Mi"
+#
+#
+#             cpu: "25m"
+#
+#           limits:
+#
+#
         imagePullPolicy: IfNotPresent
         env:
         - name: NAMESPACE
@@ -117,11 +123,17 @@ spec:
               - IPC_LOCK
               - SYS_RESOURCE
         image: quay.io/pires/docker-elasticsearch:6.2.2
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "25m"
-          limits:
+#         resources:
+#           requests:
+#
+#             memory: "512Mi"
+#
+#
+#             cpu: "25m"
+#
+#           limits:
+#
+#
         imagePullPolicy: IfNotPresent
         env:
         - name: NAMESPACE
@@ -199,11 +211,17 @@ spec:
             add:
               - IPC_LOCK
         image: quay.io/pires/docker-elasticsearch:6.2.2
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "25m"
-          limits:
+#         resources:
+#           requests:
+#
+#             memory: "512Mi"
+#
+#
+#             cpu: "25m"
+#
+#           limits:
+#
+#
         imagePullPolicy: IfNotPresent
         env:
         - name: NAMESPACE

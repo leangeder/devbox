@@ -37,29 +37,37 @@ spec:
           name: gossip
         command: ["redis-server"]
         args: ["/conf/redis.conf"]
-        readinessProbe:
-          exec:
-            command:
-            - sh
-            - -c
-            - "redis-cli -h $(hostname) ping"
-          initialDelaySeconds: 15
-          timeoutSeconds: 5
-        livenessProbe:
-          exec:
-            command:
-            - sh
-            - -c
-            - "redis-cli -h $(hostname) ping"
-          initialDelaySeconds: 20
-          periodSeconds: 3
-        resources:
-          requests:
-            memory: "100Mi"
-            cpu: "100m"
-          limits:
-            memory: "100Mi"
-            cpu: "100m"
+        # readinessProbe:
+        #   exec:
+        #     command:
+        #     - sh
+        #     - -c
+        #     - "redis-cli -h $(hostname) ping"
+        #   initialDelaySeconds: 15
+        #   timeoutSeconds: 5
+        # livenessProbe:
+        #   exec:
+        #     command:
+        #     - sh
+        #     - -c
+        #     - "redis-cli -h $(hostname) ping"
+        #   initialDelaySeconds: 20
+        #   periodSeconds: 3
+#         resources:
+#           requests:
+#
+#             memory: "100Mi"
+#
+#
+#             cpu: "100m"
+#
+#           limits:
+#
+#             memory: "100Mi"
+#
+#
+#             cpu: "100m"
+#
         volumeMounts:
         - name: conf
           mountPath: /conf

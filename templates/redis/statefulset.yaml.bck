@@ -27,17 +27,16 @@ spec:
         securityContext:
           privileged: true
       containers:
-      - name: redis
+      - name: redis-cluster
+        # image: redis-cluster:v1
         image: {{.redis.image}}
         ports:
-        - name: client
-          containerPort: 6379
-        - name: gossip
-          containerPort: 16379
-        command:
-        - redis-server
-        args:
-        - /usr/local/etc/redis/redis.conf
+        - containerPort: 6379
+          name: client
+        - containerPort: 16379
+          name: gossip
+        command: ["redis-server"]
+        args: ["/conf/redis.conf"]
         readinessProbe:
           exec:
             command:
@@ -56,57 +55,44 @@ spec:
           periodSeconds: 3
         resources:
           requests:
-            cpu: "100m"
-            memory: "100Mi"
-        volumeMounts:
-        - name: conf
-          mountPath: /usr/local/etc/redis/redis.conf
-          subPath: redis.conf
-      volumes:
-      - name: conf
-        configMap:
-          name: "redis-cluster-config"
-          items:
-          - key: redis.conf
-            path: redis.conf
----
-apiVersion: extensions/v1beta1
-kind: Deployment
-metadata:
-  name: redis-cluster-monitor
-  namespace: {{.redis.namespace}}
-  labels:
-    app: redis-cluster-monitor
-spec:
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: redis-cluster-monitor
-    spec:
-      volumes:
-      - name: conf
-        configMap:
-          name: "redis-cluster-config"
-          items:
-          - key: bootstrap-pod.sh
-            path: bootstrap-pod.sh
-      containers:
-      - name: cluster
-        image: ruby
-        command:
-        - sh
-        args:
-        - /conf/bootstrap-pod.sh
-        resources:
-          requests:
-            cpu: "100m"
-            memory: "100Mi"
-        env:
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
+{{- if ne .redis.resources.requests.memory "" }}
+            memory: "{{ .redis.resources.requests.memory }}"
+{{- end }}
+{{- if ne .redis.resources.requests.cpu "" }}
+            cpu: "{{ .redis.resources.requests.cpu }}"
+{{- end }}
+          limits:
+{{- if ne .redis.resources.limits.memory "" }}
+            memory: "{{ .redis.resources.limits.memory }}"
+{{- end }}
+{{- if ne .redis.resources.limits.cpu "" }}
+            cpu: "{{ .redis.resources.limits.cpu }}"
+{{- end }}
         volumeMounts:
         - name: conf
           mountPath: /conf
+          readOnly: false
+        - name: data
+          mountPath: /data
+          readOnly: false
+      volumes:
+      - name: conf
+        configMap:
+          name: redis-cluster-config
+          items: 
+          - key: redis.conf
+            path: redis.conf
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        app: volume
+        component: redis
+        role: services
+    spec:
+      accessModes:
+      - "ReadWriteOnce"
+      storageClassName: {{.redis.storage_class}}
+      resources:
+        requests:
+          storage: {{.redis.storage_size}}

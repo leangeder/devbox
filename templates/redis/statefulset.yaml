@@ -37,37 +37,37 @@ spec:
           name: gossip
         command: ["redis-server"]
         args: ["/conf/redis.conf"]
-        readinessProbe:
-          exec:
-            command:
-            - sh
-            - -c
-            - "redis-cli -h $(hostname) ping"
-          initialDelaySeconds: 15
-          timeoutSeconds: 5
-        livenessProbe:
-          exec:
-            command:
-            - sh
-            - -c
-            - "redis-cli -h $(hostname) ping"
-          initialDelaySeconds: 20
-          periodSeconds: 3
-        resources:
-          requests:
-{{- if ne .redis.resources.requests.memory "" }}
-            memory: "{{ .redis.resources.requests.memory }}"
-{{- end }}
-{{- if ne .redis.resources.requests.cpu "" }}
-            cpu: "{{ .redis.resources.requests.cpu }}"
-{{- end }}
-          limits:
-{{- if ne .redis.resources.limits.memory "" }}
-            memory: "{{ .redis.resources.limits.memory }}"
-{{- end }}
-{{- if ne .redis.resources.limits.cpu "" }}
-            cpu: "{{ .redis.resources.limits.cpu }}"
-{{- end }}
+        # readinessProbe:
+        #   exec:
+        #     command:
+        #     - sh
+        #     - -c
+        #     - "redis-cli -h $(hostname) ping"
+        #   initialDelaySeconds: 15
+        #   timeoutSeconds: 5
+        # livenessProbe:
+        #   exec:
+        #     command:
+        #     - sh
+        #     - -c
+        #     - "redis-cli -h $(hostname) ping"
+        #   initialDelaySeconds: 20
+        #   periodSeconds: 3
+#         resources:
+#           requests:
+# {{- if ne .redis.resources.requests.memory "" }}
+#             memory: "{{ .redis.resources.requests.memory }}"
+# {{- end }}
+# {{- if ne .redis.resources.requests.cpu "" }}
+#             cpu: "{{ .redis.resources.requests.cpu }}"
+# {{- end }}
+#           limits:
+# {{- if ne .redis.resources.limits.memory "" }}
+#             memory: "{{ .redis.resources.limits.memory }}"
+# {{- end }}
+# {{- if ne .redis.resources.limits.cpu "" }}
+#             cpu: "{{ .redis.resources.limits.cpu }}"
+# {{- end }}
         volumeMounts:
         - name: conf
           mountPath: /conf
