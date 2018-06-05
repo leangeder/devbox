@@ -1,0 +1,47 @@
+#This is an auto generated file
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: app-site-ng2
+  namespace: preview
+spec:
+  revisionHistoryLimit: 5
+  replicas: 2
+  minReadySeconds: 20
+  progressDeadlineSeconds: 90
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: app-site-ng2
+    spec:
+      containers:
+        - name: app-site-ng2
+          image: us.gcr.io/beamery-preview/app-site-ng2:v-master-bleedingedge
+          resources:
+
+
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: NODE_ENV
+            value: preview
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: http_proxy
+            value: $(NODE_NAME):4140
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            periodSeconds: 10
+            timeoutSeconds: 15
+            successThreshold: 2
+            failureThreshold: 5

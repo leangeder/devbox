@@ -1,0 +1,219 @@
+{
+  "settings": {
+    "analysis": {
+      "filter": {
+        "beamery_email_filter": {
+          "type": "pattern_capture",
+          "preserve_original": true,
+          "patterns": [
+            "([^@]+)",
+            "(\\p{L}+)",
+            "(\\d+)",
+            "@(.+)"
+          ]
+        }
+      },
+      "analyzer": {
+        "beamery_email": {
+          "type": "custom",
+          "tokenizer": "uax_url_email",
+          "filter": [
+            "beamery_email_filter",
+            "unique",
+            "lowercase"
+          ]
+        },
+        "typeahead": {
+          "type": "custom",
+          "tokenizer": "suffix_phrase",
+          "filter": [
+            "lowercase",
+            "asciifolding"
+          ]
+        }
+      },
+      "tokenizer": {
+        "suffix_phrase": {
+          "type": "path_hierarchy",
+          "delimiter": " ",
+          "reverse": true
+        }
+      },
+      "normalizer": {
+        "beamery_normalizer": {
+          "type": "custom",
+          "char_filter": [],
+          "filter": [
+            "lowercase"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "events": {
+      "properties": {
+        "appFromEmail": {
+          "type": "text",
+          "fields": {
+            "string": {
+              "type": "text",
+              "analyzer": "beamery_email"
+            },
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "attempt": {
+          "type": "text",
+          "fields": {
+            "string": {
+              "type": "text",
+              "analyzer": "beamery_email"
+            },
+            "keyword": {
+              "type": "keyword",
+              "normalizer": "beamery_normalizer",
+              "ignore_above": 256
+            }
+          }
+        },
+        "campaignId": {
+          "type": "keyword"
+        },
+        "cert_err": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "normalizer": "beamery_normalizer",
+              "ignore_above": 256
+            }
+          }
+        },
+        "companyId": {
+          "type": "keyword"
+        },
+        "contactId": {
+          "type": "keyword"
+        },
+        "email": {
+          "type": "text",
+          "fields": {
+            "string": {
+              "type": "text",
+              "analyzer": "beamery_email"
+            },
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "emailId": {
+          "type": "keyword"
+        },
+        "employerFromEmail": {
+          "type": "text",
+          "fields": {
+            "string": {
+              "type": "text",
+              "analyzer": "beamery_email"
+            },
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "es": {
+          "type": "date"
+        },
+        "event": {
+          "type": "keyword"
+        },
+        "inbox": {
+          "type": "keyword"
+        },
+        "ip": {
+          "type": "keyword"
+        },
+        "messageId": {
+          "type": "keyword"
+        },
+        "nylas_event_id": {
+          "type": "keyword"
+        },
+        "reason": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "response": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "sg_event_id": {
+          "type": "keyword"
+        },
+        "sg_message_id": {
+          "type": "keyword"
+        },
+        "smtp-id": {
+          "type": "keyword"
+        },
+        "status": {
+          "type": "keyword"
+        },
+        "threadId": {
+          "type": "keyword"
+        },
+        "time": {
+          "type": "date"
+        },
+        "timestamp": {
+          "type": "long"
+        },
+        "tls": {
+          "type": "long"
+        },
+        "touch": {
+          "type": "long"
+        },
+        "touchpointId": {
+          "type": "keyword"
+        },
+        "url": {
+          "type": "keyword"
+        },
+        "url_offset": {
+          "properties": {
+            "index": {
+              "type": "long"
+            },
+            "type": {
+              "type": "keyword"
+            }
+          }
+        },
+        "userId": {
+          "type": "keyword"
+        },
+        "useragent": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}

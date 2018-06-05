@@ -1,0 +1,149 @@
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: rabbitmq
+  namespace: {{.rabbitmq.namespace}}
+  labels:
+    app: rabbitmq
+spec:
+  serviceName: rabbitmq
+  replicas: {{ .rabbitmq.replica }}
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+{{- if not .dev }}
+{{- if .rabbitmq.affinity_key }}
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: {{.rabbitmq.affinity_key}}
+              operator: In
+              values:
+              - {{.rabbitmq.affinity_selector}}
+{{- end }}
+{{- end }}
+      serviceAccountName: rabbitmq
+      terminationGracePeriodSeconds: 10
+      initContainers:
+      - name: tmp
+        image: busybox
+        command:
+        - 'sh'
+        - '-c'
+        - >
+          wget -O /tmp/delay_plugin.zip https://dl.bintray.com/rabbitmq/community-plugins/3.7.x/rabbitmq_delayed_message_exchange/rabbitmq_delayed_message_exchange-20171201-3.7.x.zip;
+          unzip /tmp/delay_plugin.zip -d /tmp/rabbitmq;
+        volumeMounts:
+        - name: tmp-rabbitmq
+          mountPath: /tmp/rabbitmq
+      containers:
+      - name: rabbitmq-autocluster
+        image: {{.rabbitmq.image}}
+        imagePullPolicy: Always
+        command:
+        - /tmp/script.sh
+        ports:
+        - name: http
+          containerPort: 15672
+        - name: amqp
+          containerPort: 5672
+        - name: epmd
+          containerPort: 4369
+        # livenessProbe:
+        #   exec:
+        #     command: ["rabbitmqctl", "status"]
+        #   initialDelaySeconds: 30
+        #   timeoutSeconds: 5
+        # readinessProbe:
+        #   exec:
+        #     command: ["rabbitmqctl", "status"]
+        #   initialDelaySeconds: 10
+        #   timeoutSeconds: 5
+        env:
+        - name: MY_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: RABBITMQ_USE_LONGNAME
+          value: "true"
+        - name: RABBITMQ_NODENAME
+          value: "rabbit@$(MY_POD_IP)"
+        - name: AUTOCLUSTER_TYPE
+          value: "k8s"
+        - name: AUTOCLUSTER_DELAY
+          value: "10"
+        - name: K8S_ADDRESS_TYPE
+          value: "ip"
+        - name: AUTOCLUSTER_CLEANUP
+          value: "true"
+        - name: CLEANUP_WARN_ONLY
+          value: "false"
+        - name: K8S_SERVICE_NAME
+          value: "rabbitmq"
+        - name: RABBITMQ_ERLANG_COOKIE
+          valueFrom:
+            secretKeyRef:
+              name: cookie
+              key: rabbitmq.cookie
+#         resources:
+#           requests:
+# {{- if ne .rabbitmq.resources.requests.memory "" }}
+#             memory: "{{ .rabbitmq.resources.requests.memory }}"
+# {{- end }}
+# {{- if ne .rabbitmq.resources.requests.cpu "" }}
+#             cpu: "{{ .rabbitmq.resources.requests.cpu }}"
+# {{- end }}
+#           limits:
+# {{- if ne .rabbitmq.resources.limits.memory "" }}
+#             memory: "{{ .rabbitmq.resources.limits.memory }}"
+# {{- end }}
+# {{- if ne .rabbitmq.resources.limits.cpu "" }}
+#             cpu: "{{ .rabbitmq.resources.limits.cpu }}"
+# {{- end }}
+        volumeMounts:
+        - name: config
+          mountPath: /etc/rabbitmq
+        - name: data
+          mountPath: /var/lib/rabbitmq
+          subPath: rabbitmq
+        - name: script
+          mountPath: /tmp/script.sh
+          subPath: script.sh
+        - name: tmp-rabbitmq
+          mountPath: /tmp/rabbitmq
+      volumes:
+      - name: tmp-rabbitmq
+        emptyDir: {}
+      - name: config
+        configMap:
+          name: rabbitmq-config
+          items:
+          - key: rabbitmq.conf
+            path: rabbitmq.conf
+          - key: rabbitmq.definitions
+            path: definitions.json
+          - key: rabbitmq.plugins
+            path: enabled_plugins
+      - name: script
+        configMap:
+          name: rabbitmq-config
+          defaultMode: 0755
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        app: volume
+        component: rabbitmq
+        role: services
+    spec:
+      accessModes:
+      - "ReadWriteOnce"
+      storageClassName: {{.rabbitmq.storage_class}}
+      resources:
+        requests:
+          storage: {{.rabbitmq.storage_size}}

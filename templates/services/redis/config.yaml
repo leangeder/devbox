@@ -1,0 +1,45 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-cluster-config
+  namespace: {{.redis.namespace}}
+data:
+  redis.conf: |
+    port 6379
+    cluster-enabled yes
+    cluster-require-full-coverage no
+    cluster-node-timeout 15000
+    cluster-config-file /data/nodes.conf
+    cluster-migration-barrier 1
+    appendonly yes
+    protected-mode no
+  bootstrap-pod.sh: |
+    #!/bin/sh
+    set -e
+    set -x
+
+    gem install redis;
+
+    wget -O /usr/local/bin/peer-finder https://storage.googleapis.com/kubernetes-release/pets/peer-finder;
+    wget -O /usr/local/bin/redis-trib http://download.redis.io/redis-stable/src/redis-trib.rb;
+    chmod u+x /usr/local/bin/peer-finder /usr/local/bin/redis-trib;
+
+    # # > /tmp/initial_peers;
+    # while test $(cat /tmp/initial_peers | wc -l) -lt {{.redis.replica}}
+    # do
+    #    peer-finder -on-start 'tee > /tmp/initial_peers' -service redis-cluster.redis.svc.cluster.local -ns $POD_NAMESPACE
+    # done
+
+
+    # for _instance in $(cat /tmp/initial_peers)
+    # do
+    #   echo "$(perl -MSocket -e 'print inet_ntoa(scalar(gethostbyname("'${_instance}'")))'):6379" >> /tmp/redis_clusters
+    # done
+
+    for i in $(seq 0 {{.redis.replica}})
+    do
+      echo "$(perl -MSocket -e 'print inet_ntoa(scalar(gethostbyname("redis-cluster-'${i}'")))'):6379" >> /tmp/redis_clusters
+    done
+
+    redis-trib create --replicas 1 $(cat /tmp/redis_clusters);

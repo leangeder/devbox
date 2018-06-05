@@ -1,0 +1,77 @@
+#This is an auto generated file
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: api-core
+  namespace: preview
+spec:
+  revisionHistoryLimit: 5
+  replicas: 2
+  minReadySeconds: 20
+  progressDeadlineSeconds: 90
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: api-core
+    spec:
+      containers:
+        - name: api-core
+          image: us.gcr.io/beamery-preview/api-core:v-master-bleedingedge
+          resources:
+
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9089
+              httpHeaders:
+                - name: Authorization
+                  value: Basic aGVhbHRoOlg1S25IKVpTIyslcCJoSHc=
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9089
+          volumeMounts:
+          - mountPath: /logstash/certs
+            name: ssl
+          - name: test
+            mountPath: /src/node_modules/api-plugin-configs/settings/queues.js
+            subPath: queues.js
+          - name: test-1
+            mountPath: /src/node_modules/api-plugin-configs/settings/env/default.js
+            subPath: default.js
+          env:
+          - name: DEBUG
+            value: debug
+          - name: NODE_ENV
+            value: "" #preview
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: http_proxy
+            value: $(NODE_NAME):4140
+          - name: GCLOUD_PROJECT
+            value: beamery-preview
+          - name: ENABLE_GCP_TRACE
+            value: ""
+      volumes:
+      - name: ssl
+        secret:
+          secretName: lumberjack-ssl
+      - name: test
+        configMap:
+          name: config-test
+          items:
+          - key: queues.js
+            path: queues.js
+      - name: test-1
+        configMap:
+          name: config-test
+          items:
+          - key: default.js
+            path: default.js

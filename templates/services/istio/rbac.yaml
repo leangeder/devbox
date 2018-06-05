@@ -1,0 +1,156 @@
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: istio-pilot
+  namespace: {{.istio.namespace}}
+rules:
+- apiGroups: ["config.istio.io"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["networking.istio.io"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["authentication.istio.io"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["*"]
+- apiGroups: ["extensions"]
+  resources: ["thirdpartyresources", "thirdpartyresources.extensions", "ingresses", "ingresses/status"]
+  verbs: ["*"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["create", "get", "list", "watch", "update"]
+- apiGroups: [""]
+  resources: ["endpoints", "pods", "services"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["namespaces", "nodes", "secrets"]
+  verbs: ["get", "list", "watch"]
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: istio-ingress
+  namespace: {{.istio.namespace}}
+rules:
+- apiGroups: ["extensions"]
+  resources: ["thirdpartyresources", "ingresses"]
+  verbs: ["get", "watch", "list", "update"]
+- apiGroups: [""]
+  resources: ["configmaps", "pods", "endpoints", "services"]
+  verbs: ["get", "watch", "list"]
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: istio-sidecar-injector
+  namespace: {{.istio.namespace}}
+rules:
+- apiGroups: ["*"]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources: ["mutatingwebhookconfigurations"]
+  verbs: ["get", "list", "watch", "patch"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: istio-pilot
+roleRef:
+  kind: ClusterRole
+  apiGroup: rbac.authorization.k8s.io
+  name: istio-pilot
+subjects:
+  - kind: ServiceAccount
+    name: istio-pilot
+    namespace: {{.istio.namespace}}
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: istio-ingress
+roleRef:
+  kind: ClusterRole
+  apiGroup: rbac.authorization.k8s.io
+  name: istio-ingress
+subjects:
+  - kind: ServiceAccount
+    name: istio-ingress
+    namespace: {{.istio.namespace}}
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: istio-sidecar-injector
+roleRef:
+  kind: ClusterRole
+  apiGroup: rbac.authorization.k8s.io
+  name: istio-sidecar-injector
+subjects:
+  - kind: ServiceAccount
+    name: istio-sidecar-injector
+    namespace: {{.istio.namespace}}
+# ---
+# kind: ClusterRole
+# apiVersion: rbac.authorization.k8s.io/v1beta1
+# metadata:
+#   name: istio-pilot
+#   namespace: {{.istio.namespace}}
+# rules:
+#   - apiGroups: [""]
+#     resources: ["configmaps", "endpoints", "pods", "services"]
+#     verbs: ["*"]
+#   - apiGroups: ["extensions"]
+#     resources: ["thirdpartyresources", "thirdpartyresources.extensions", "ingresses"]
+#     verbs: ["*"]
+#   - apiGroups: ["istio.io"]
+#     resources: ["istioconfigs", "istioconfigs.istio.io"]
+#     verbs: ["*"]
+# ---
+# kind: ClusterRole
+# apiVersion: rbac.authorization.k8s.io/v1beta1
+# metadata:
+#   name: istio-ingress
+#   namespace: {{.istio.namespace}}
+# rules:
+#   - apiGroups: [""]
+#     resources: ["configmaps", "endpoints", "pods", "services"]
+#     verbs: ["*"]
+#   - apiGroups: ["extensions"]
+#     resources: ["thirdpartyresources", "thirdpartyresources.extensions", "ingresses"]
+#     verbs: ["*"]
+#   - apiGroups: ["istio.io"]
+#     resources: ["istioconfigs", "istioconfigs.istio.io"]
+#     verbs: ["*"]
+# ---
+# kind: ClusterRoleBinding
+# apiVersion: rbac.authorization.k8s.io/v1beta1
+# metadata:
+#   name: istio-pilot
+#   namespace: {{.istio.namespace}}
+# subjects:
+#   - kind: ServiceAccount
+#     name: istio-pilot
+#     namespace: {{.istio.namespace}}
+# roleRef:
+#   kind: ClusterRole
+#   name: istio-pilot
+#   apiGroup: rbac.authorization.k8s.io
+# ---
+# kind: ClusterRoleBinding
+# apiVersion: rbac.authorization.k8s.io/v1beta1
+# metadata:
+#   name: istio-ingress
+#   namespace: {{.istio.namespace}}
+# subjects:
+#   - kind: ServiceAccount
+#     name: istio-ingress
+#     namespace: {{.istio.namespace}}
+# roleRef:
+#   kind: ClusterRole
+#   name: istio-ingress
+#   apiGroup: rbac.authorization.k8s.io

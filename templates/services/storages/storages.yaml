@@ -1,0 +1,14 @@
+{{- range .storageclass }}
+{{- $currentStorageClass := . -}}
+---
+kind: StorageClass
+# apiVersion: storage.k8s.io/v1
+apiVersion: storage.k8s.io/v1beta1
+metadata:
+  name: {{ $currentStorageClass.name }}
+provisioner: {{ $currentStorageClass.provisionner }}
+{{- if $currentStorageClass.type }}
+parameters:
+  type: {{$currentStorageClass.type }}
+{{- end }}
+{{- end }}

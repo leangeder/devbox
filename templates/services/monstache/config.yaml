@@ -1,0 +1,339 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: monstachetoml
+  namespace: {{.monstache.namespace}}
+  labels:
+    app: monstache
+data:
+  monstache-config.toml: |
+    mongo-url = "{{.monstache.mongo_url}}"
+    mongo-pem-file = "/certs/mongodb.pem"
+    mongo-validate-pem-file = false
+    elasticsearch-urls = [ "https://elasticsearch:9200" ]
+    elasticsearch-pem-file = "/certs/elasticsearch.pem"
+    elasticsearch-max-docs = 1
+    elasticsearch-max-bytes = 65536
+    elasticsearch-retry = true
+    cluster-name = "{{.monstache.cluster_name}}"
+    replay = false
+    resume = true
+    resume-name = "{{.monstache.resume_name}}"
+    namespace-regex = "^{{.monstache.database_prefix}}.(activities|contacts|events|organisations|organisationskb)$"
+    gtm-channel-size = 512
+    gzip = true
+    stats = true
+    dropped-databases = false
+    dropped-collections = false
+    verbose = false
+    
+    
+    
+    # Contacts
+    
+    [[mapping]]
+    namespace = "{{.monstache.database_prefix}}.contacts"
+    index = "{{.monstache.es_prefix}}contacts"
+    type = "contacts"
+    
+    [[script]]
+    namespace = "{{.monstache.database_prefix}}.contacts"
+    script = """
+    module.exports = function(doc) {
+        // Check for deleted contact (soft delete)
+        if (!!doc.deletedAt) {
+            // Return false to kill ES document
+            return false;
+        }
+        // Init a copy (Underscore is shit)
+        var copy = JSON.parse(JSON.stringify(doc));
+        // Loop over the doc looking for values
+        Object.keys(doc).forEach(function(key) {
+            // Check for a values prop
+            if (!!doc[key].values) {
+                // Reset copy values
+                copy[key].values = [];
+                // Loop over each property
+                Object.keys(doc[key].values).forEach(function(prop) {
+                    // Kill the links.userId property
+                    if (key === 'links' && prop.userId) {
+                        // Kill it by ref
+                        delete prop.userId;
+                    }
+                    copy[key].values.push(doc[key].values[prop]);
+                });
+                // Remove keys
+                delete copy[key].keys;
+            }
+        });
+        // Remove unique keys
+        if (!!copy.uniqueKeys) {
+            delete copy.uniqueKeys;
+        }
+        // Remove identifier keys
+        if (!!copy.identifierKeys) {
+            delete copy.identifierKeys;
+        }
+        // Remove fields for index
+        if (!!copy.fieldsForIndex) {
+            delete copy.fieldsForIndex;
+        }
+        // Remove the user stats
+        if (!!copy.users) {
+            delete copy.users;
+        }
+        // Send it back
+        return copy;
+    }
+    """
+    
+    
+    # Events
+    
+    [[mapping]]
+    namespace = "{{.monstache.database_prefix}}.events"
+    index = "{{.monstache.es_prefix}}events"
+    type = "events"
+    
+    
+    # Activities
+    
+    [[mapping]]
+    namespace = "{{.monstache.database_prefix}}.activities"
+    index = "{{.monstache.es_prefix}}activities"
+    type = "activities"
+    
+    [[script]]
+    namespace = "{{.monstache.database_prefix}}.activities"
+    script = """
+    module.exports = function(_item) {
+    
+        var item = JSON.parse(JSON.stringify(_item));
+    
+        // Helper constants
+        var OBJ_CONTACT = {
+            key     : 'object.type',
+            value   : ['contact']
+        };
+        var TYPE_ADDED = {
+            key     : 'type',
+            value   : ['added']
+        };
+    
+        // Helper function
+        // Analogue of lodash _.get(), _.result() with deep key paths (Underscore do not have alternatives)
+        function get(obj, is, value) {
+            if (typeof obj == 'undefined')
+                return value;
+            if (typeof is == 'string')
+                return get(obj,is.split('.'), value);
+            else if (is.length==1 && value!==undefined)
+                return obj[is[0]] = value;
+            else if (is.length==0)
+                return obj;
+            else
+                return get(obj[is[0]],is.slice(1), value);
+        }
+    
+        // Map doNotContact
+        // item.metadata.to - should be a object but with /doNotContact/ it is a Boolean
+        // need to map it as a new variable to keep ES map
+        if(get(item, 'metadata.attribute') === 'doNotContact'){
+            if(typeof item.metadata.to === 'boolean'){
+                item.metadata.doNotContact = {
+                    id: item.metadata.to,
+                    value: 'do not contact'
+                }
+            }else{
+                item.metadata.doNotContact = item.metadata.to;
+            }
+            delete item.metadata.to;
+        }
+    
+        // Map portal form answers key/value structure
+        if(item.type === 'completed'
+            && get(item, 'object.type') === 'portalForm'
+            && !!get(item, 'metadata.answers')){
+    
+            var answers = [];
+            Object.keys(get(item, 'metadata.answers')).forEach(function(key) {
+                // Check for a values prop
+                if (!!item.metadata.answers[key].answer) {
+                    if (typeof (item.metadata.answers[key].answer) === 'string'){
+                        item.metadata.answers[key].answer = {
+                            value: item.metadata.answers[key].answer
+                        }
+                    }else{
+                        if(!item.metadata.answers[key].answer.id){
+                            var answerValues = [];
+                            Object.keys(item.metadata.answers[key].answer).forEach(function(answerKey) {
+                                answerValues.push(item.metadata.answers[key].answer[answerKey])
+                            });
+                            item.metadata.answers[key].answer = {
+                                values: answerValues
+                            }
+                        }
+                    }
+                    answers.push(_.extend({id: key}, item.metadata.answers[key]));
+                }
+            });
+            console.log('answers', JSON.stringify(answers, null,2 ));
+            item.metadata.answers = answers;
+        }
+    
+        // Based on next conditions add eventType property to group activities more granular
+        _.forEach({
+            tasksCreated: [{
+                key     : 'object.resource.type',
+                value   : ['followup']
+            },TYPE_ADDED],
+            contactsAdded: [{
+                key     : 'type',
+                value   : ['created']
+            },OBJ_CONTACT],
+            contactsUpdated: [{
+                key     : 'type',
+                value   : ['assigned', 'added', 'removed', 'updated']
+            },OBJ_CONTACT],
+            tasksCompleted: [{
+                key     : 'type',
+                value   : ['taskCompleted']
+            }],
+            notesLogged: [{
+                key     : 'object.resource.type',
+                value   : ['note']
+            },TYPE_ADDED],
+            phoneCallsLogged: [{
+                key     : 'object.resource.type',
+                value   : ['call']
+            },TYPE_ADDED],
+            meetingsLogged: [{
+                key     : 'object.resource.type',
+                value   : ['meeting']
+            },TYPE_ADDED],
+            messagesLogged: [{
+                key     : 'object.resource.type',
+                value   : ['message']
+            },TYPE_ADDED],
+            syncedGreenhouse: [{
+                key     : 'type',
+                value   : ['synced']
+            },{
+                key     : 'target.id',
+                value   : ['greenhouse']
+            },OBJ_CONTACT],
+            contactsImportFinished: [{
+                key     : 'object.type',
+                value   : ['contactsImportFinished']
+            }, {
+                key     : 'actor.type',
+                value   : ['user']
+            }],
+            contactsImportStarted: [{
+                key     : 'object.type',
+                value   : ['contactsImportStarted']
+            }, {
+                key     : 'actor.type',
+                value   : ['user']
+            }]
+        }, function(conditions, name) {
+            // Check each condition and pass resylt to array
+            var conditionRes = _.map(conditions, function(condition) {
+                return condition.value.indexOf(get(item, condition.key));
+            });
+    
+            // If all condition not equal -1 then all matched
+            var isFound = _.every(conditionRes, function(con){return con !== -1;});
+    
+            // Add eventType property based on condition name
+            if(isFound){
+                item.eventType  = name;
+            }
+    
+            return !isFound;
+        });
+    
+        console.log('item', JSON.stringify(item));
+    
+        return item;
+    }
+    """
+    
+    
+    # Organisations
+    
+    [[mapping]]
+    namespace = "{{.monstache.database_prefix}}.organisations"
+    index = "{{.monstache.es_prefix}}organisations"
+    type = "organisations"
+    
+    [[script]]
+    namespace = "{{.monstache.database_prefix}}.organisations"
+    script = """
+    module.exports = function(doc) {
+        // Check for deleted contact (soft delete)
+        if (!!doc.deletedAt) {
+            // Return false to kill ES document
+            return false;
+        }
+        // Init a copy (Underscore is shit)
+        var copy = JSON.parse(JSON.stringify(doc));
+        // Loop over the doc looking for values
+        Object.keys(doc).forEach(function(key) {
+            // Check for a values prop
+            if (!!doc[key] && !!doc[key].values) {
+                // Reset copy values
+                copy[key].values = [];
+                // Loop over each property
+                Object.keys(doc[key].values).forEach(function(prop) {
+                    // Check for userId and force to string (temp hack)
+                    if (key === 'links' && !!prop.userId) {
+                        prop.userId = prop.userId.toString();
+                    }
+                    copy[key].values.push(doc[key].values[prop]);
+                });
+                // Remove keys
+                delete copy[key].keys;
+            }
+        });
+        // Send it back
+        return copy;
+    }
+    """
+    
+    
+    # Organisations KB
+    
+    [[mapping]]
+    namespace = "{{.monstache.database_prefix}}.organisationskb"
+    index = "{{.monstache.es_prefix}}organisationskb"
+    type = "organisations"
+    
+    [[script]]
+    namespace = "{{.monstache.database_prefix}}.organisationskb"
+    script = """
+    module.exports = function(doc) {
+        // Init a copy (Underscore is shit)
+        var copy = JSON.parse(JSON.stringify(doc));
+        // Loop over the doc looking for values
+        Object.keys(doc).forEach(function(key) {
+            // Check for a values prop
+            if (!!doc[key] && !!doc[key].values) {
+                // Reset copy values
+                copy[key].values = [];
+                // Loop over each property
+                Object.keys(doc[key].values).forEach(function(prop) {
+                    // Check for userId and force to string (temp hack)
+                    if (key === 'links' && !!prop.userId) {
+                        prop.userId = prop.userId.toString();
+                    }
+                    copy[key].values.push(doc[key].values[prop]);
+                });
+                // Remove keys
+                delete copy[key].keys;
+            }
+        });
+        // Send it back
+        return copy;
+    }
+    """

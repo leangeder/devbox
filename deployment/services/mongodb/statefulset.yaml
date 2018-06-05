@@ -1,0 +1,90 @@
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: mongod
+  namespace: mongodb
+  labels:
+    app: mongodb
+    component: mongodb
+    role: services
+spec:
+  serviceName: mongodb
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mongodb
+        component: mongodb
+        role: services
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: mongod
+        image: mongo
+        # args:
+        # - "--master"
+        #   - "numactl"
+        #   - "--interleave=all"
+        #   - "mongod"
+        #   - "--wiredTigerCacheSizeGB"
+        #   - "0.1"
+        #   - "--bind_ip"
+        #   - "0.0.0.0"
+        #   - "--replSet"
+        #   - "MainRepSet"
+        #   - "--auth"
+        #   - "--clusterAuthMode"
+        #   - "keyFile"
+        #   - "--keyFile"
+        #   - "/etc/secrets-volume/internal-auth-mongodb-keyfile"
+        #   - "--setParameter"
+        #   - "authenticationMechanisms=SCRAM-SHA-1"
+#         resources:
+#           requests:
+#
+#             memory: "200Mi"
+#
+#
+#             cpu: "0.2m"
+#
+#           limits:
+#
+#             memory: "512Mi"
+#
+#
+#             cpu: "1m"
+#
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          value: "root"
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          value: "root"
+        ports:
+        - name: mongo
+          containerPort: 27017
+        # volumeMounts:
+        # - name: secrets-volume
+        #   readOnly: true
+        #   mountPath: /etc/secrets-volume
+        # - name: data
+        #   mountPath: /data/db
+      volumes:
+      - name: secrets-volume
+        secret:
+          secretName: shared-bootstrap-data
+          defaultMode: 256
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        app: volume
+        component: mongodb
+        role: services
+    spec:
+      accessModes:
+      - "ReadWriteOnce"
+      storageClassName: fast
+      resources:
+        requests:
+          storage: 1Gi

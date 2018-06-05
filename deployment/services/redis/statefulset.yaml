@@ -1,0 +1,98 @@
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: redis-cluster
+  namespace: redis
+  labels:
+    app: redis-cluster
+spec:
+  serviceName: redis-cluster
+  replicas: 1
+  podManagementPolicy: "Parallel"
+  template:
+    metadata:
+      labels:
+        app: redis-cluster
+    spec:
+      initContainers:
+      - name: init-sysctl
+        image: busybox
+        imagePullPolicy: IfNotPresent
+        command:
+        - "/bin/sh"
+        - "-c"
+        - >
+          sysctl -w net.core.somaxconn=65535;
+        securityContext:
+          privileged: true
+      containers:
+      - name: redis-cluster
+        # image: redis-cluster:v1
+        image: redis:3.2.1
+        ports:
+        - containerPort: 6379
+          name: client
+        - containerPort: 16379
+          name: gossip
+        command: ["redis-server"]
+        args: ["/conf/redis.conf"]
+        # readinessProbe:
+        #   exec:
+        #     command:
+        #     - sh
+        #     - -c
+        #     - "redis-cli -h $(hostname) ping"
+        #   initialDelaySeconds: 15
+        #   timeoutSeconds: 5
+        # livenessProbe:
+        #   exec:
+        #     command:
+        #     - sh
+        #     - -c
+        #     - "redis-cli -h $(hostname) ping"
+        #   initialDelaySeconds: 20
+        #   periodSeconds: 3
+#         resources:
+#           requests:
+#
+#             memory: "100Mi"
+#
+#
+#             cpu: "100m"
+#
+#           limits:
+#
+#             memory: "100Mi"
+#
+#
+#             cpu: "100m"
+#
+        volumeMounts:
+        - name: conf
+          mountPath: /conf
+          readOnly: false
+        - name: data
+          mountPath: /data
+          readOnly: false
+      volumes:
+      - name: conf
+        configMap:
+          name: redis-cluster-config
+          items: 
+          - key: redis.conf
+            path: redis.conf
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        app: volume
+        component: redis
+        role: services
+    spec:
+      accessModes:
+      - "ReadWriteOnce"
+      storageClassName: fast
+      resources:
+        requests:
+          storage: 100Mi
