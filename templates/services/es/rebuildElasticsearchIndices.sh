@@ -11,8 +11,10 @@ ES_HOST="https://elasticsearch:9200"
 ES_HOST="http://elasticsearch:9200"
 {{- end }}
 MAPPINGS_PATH="/config"
-SHARD="3"
-REPLICA="2"
+# SHARD="3"
+SHARD="${ES_SHARD}"
+# REPLICA="2"
+REPLICA="${ES_REPLICA}"
 DATE="$(date +%d-%m-%Y)"
 
 ${COMMAND} GET "${ES_HOST}/_cluster/health?wait_for_status=green&timeout=50s"

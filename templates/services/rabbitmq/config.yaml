@@ -20,13 +20,12 @@ metadata:
 data:
   script.sh: |
     #!/usr/bin/env sh
+    set -xe
     echo ${RABBITMQ_ERLANG_COOKIE} > /var/lib/rabbitmq/.erlang.cookie
     chown -R rabbitmq: /var/lib/rabbitmq/
     cp /tmp/rabbitmq/* /plugins/
-    rabbitmq-plugins enable rabbitmq_delayed_message_exchange --offline
+    rabbitmq-plugins enable rabbitmq_peer_discovery_k8s rabbitmq_consistent_hash_exchange rabbitmq_delayed_message_exchange rabbitmq_top rabbitmq_federation rabbitmq_federation_management rabbitmq_management rabbitmq_mqtt rabbitmq_shovel rabbitmq_shovel_management rabbitmq_stomp rabbitmq_web_stomp --offline
     docker-entrypoint.sh "rabbitmq-server"
-  rabbitmq.plugins: |
-    [rabbitmq_peer_discovery_k8s,rabbitmq_consistent_hash_exchange,rabbitmq_delayed_message_exchange,rabbitmq_top,rabbitmq_federation,rabbitmq_federation_management,rabbitmq_management,rabbitmq_mqtt,rabbitmq_shovel,rabbitmq_shovel_management,rabbitmq_stomp,rabbitmq_web_stomp].
   rabbitmq.conf: |
     ## Clustering
     cluster_formation.peer_discovery_backend  = rabbit_peer_discovery_k8s

@@ -21,10 +21,24 @@ spec:
       containers:
       - name: es
         image: alpine
-        command: ["/bin/sh","-xc","/config/rebuildElasticsearchIndices.sh"]
+        command:
+        - "/bin/sh"
+        - "-xc"
+        - >
+          apk -U add curl;
+          /config/rebuildElasticsearchIndices.sh
         env:
         - name: ES_PREFIX
           value: "{{.elasticsearch.es_prefix }}"
+{{ range .elasticsearch.nodes }}
+{{- $currentEsNode := . }}
+{{- if eq $currentEsNode.name "data" }}
+        - name: ES_REPLICA
+          value: "$(({{ $currentEsNode.replica }}*2))"
+        - name: ES_SHARD
+          value: "{{ $currentEsNode.replica }}"
+{{- end }}
+{{- end }}
         volumeMounts:
         - name: config
           mountPath: /config

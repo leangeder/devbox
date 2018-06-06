@@ -50,7 +50,7 @@ data:
     searchguard.ssl.http.truststore_filepath: certs/truststore.jks
     searchguard.ssl.http.truststore_password: qwerty
     searchguard.ssl.http.enable_openssl_if_available: true
-{{- end }} 
+{{- end }}
 
     bootstrap:
       memory_lock: ${MEMORY_LOCK}

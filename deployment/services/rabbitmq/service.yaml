@@ -8,12 +8,12 @@ metadata:
     app: rabbitmq
 spec:
   ports:
-      - name: amqp
-        port: 5672
-      - name: cluster
-        port: 4369
-      - name: dist
-        port: 25672
+  - name: amqp
+    port: 5672
+  - name: cluster
+    port: 4369
+  - name: dist
+    port: 25672
   selector:
     app: rabbitmq
 ---
@@ -26,7 +26,7 @@ metadata:
     app: rabbitmq
 spec:
   ports:
-   - name: http-rabbitmq
-     port: 15672
+  - name: http
+    port: 15672
   selector:
     app: rabbitmq

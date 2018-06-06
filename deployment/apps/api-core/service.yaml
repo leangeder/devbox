@@ -5,13 +5,10 @@ metadata:
   name: api-core
   namespace: preview
 spec:
-  # type: NodePort
   selector:
     app: api-core
+    type: api
+    environment: preview
   ports:
   - name: http
     port: 9089
-  #   - protocol: TCP
-  #     port: 9089
-  #     targetPort: 9089
-  #     name: api-core

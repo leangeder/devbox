@@ -1,0 +1,14 @@
+#This is an auto generated file
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-core-as
+  namespace: preview
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1beta1
+    kind: Deployment
+    name: api-core
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 100

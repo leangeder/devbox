@@ -24,7 +24,7 @@ data:
     path:
       data: /data/data
       logs: /data/log
-      repo: /data/repo 
+      repo: /data/repo
 
     bootstrap:
       memory_lock: ${MEMORY_LOCK}

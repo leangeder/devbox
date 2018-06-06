@@ -7,7 +7,7 @@ metadata:
     app: monstache
 data:
   monstache-config.toml: |
-    mongo-url = "mongodb://SeedAdmin:helloKitty@mongodb:27017/?authSource=admin&replicaSet=RS-BeameryPreview-0"
+    mongo-url = "mongodb://SeedAdmin:helloKitty@mongodb.mongodb:27017/?authSource=admin&replicaSet=RS-BeameryPreview-0"
     mongo-pem-file = "/certs/mongodb.pem"
     mongo-validate-pem-file = false
     elasticsearch-urls = [ "https://elasticsearch:9200" ]
@@ -19,7 +19,7 @@ data:
     replay = false
     resume = true
     resume-name = "beamery"
-    namespace-regex = "^beamery-preview.(activities|contacts|events|organisations|organisationskb)$"
+    namespace-regex = "^beamery-dev.(activities|contacts|events|organisations|organisationskb)$"
     gtm-channel-size = 512
     gzip = true
     stats = true
@@ -32,12 +32,12 @@ data:
     # Contacts
     
     [[mapping]]
-    namespace = "beamery-preview.contacts"
-    index = "preview-contacts"
+    namespace = "beamery-dev.contacts"
+    index = "dev-contacts"
     type = "contacts"
     
     [[script]]
-    namespace = "beamery-preview.contacts"
+    namespace = "beamery-dev.contacts"
     script = """
     module.exports = function(doc) {
         // Check for deleted contact (soft delete)
@@ -91,20 +91,20 @@ data:
     # Events
     
     [[mapping]]
-    namespace = "beamery-preview.events"
-    index = "preview-events"
+    namespace = "beamery-dev.events"
+    index = "dev-events"
     type = "events"
     
     
     # Activities
     
     [[mapping]]
-    namespace = "beamery-preview.activities"
-    index = "preview-activities"
+    namespace = "beamery-dev.activities"
+    index = "dev-activities"
     type = "activities"
     
     [[script]]
-    namespace = "beamery-preview.activities"
+    namespace = "beamery-dev.activities"
     script = """
     module.exports = function(_item) {
     
@@ -263,12 +263,12 @@ data:
     # Organisations
     
     [[mapping]]
-    namespace = "beamery-preview.organisations"
-    index = "preview-organisations"
+    namespace = "beamery-dev.organisations"
+    index = "dev-organisations"
     type = "organisations"
     
     [[script]]
-    namespace = "beamery-preview.organisations"
+    namespace = "beamery-dev.organisations"
     script = """
     module.exports = function(doc) {
         // Check for deleted contact (soft delete)
@@ -305,12 +305,12 @@ data:
     # Organisations KB
     
     [[mapping]]
-    namespace = "beamery-preview.organisationskb"
-    index = "preview-organisationskb"
+    namespace = "beamery-dev.organisationskb"
+    index = "dev-organisationskb"
     type = "organisations"
     
     [[script]]
-    namespace = "beamery-preview.organisationskb"
+    namespace = "beamery-dev.organisationskb"
     script = """
     module.exports = function(doc) {
         // Init a copy (Underscore is shit)

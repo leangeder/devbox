@@ -44,7 +44,7 @@ spec:
       containers:
       - name: rabbitmq-autocluster
         image: {{.rabbitmq.image}}
-        imagePullPolicy: Always
+        # imagePullPolicy: Always
         command:
         - /tmp/script.sh
         ports:
@@ -106,8 +106,12 @@ spec:
 #             cpu: "{{ .rabbitmq.resources.limits.cpu }}"
 # {{- end }}
         volumeMounts:
-        - name: config
-          mountPath: /etc/rabbitmq
+        - name: rabbitmq-configs
+          mountPath: /etc/rabbitmq/rabbitmq.conf
+          subPath: rabbitmq.conf
+        - name: rabbitmq-definitions
+          mountPath: /etc/rabbitmq/definitions.json
+          subPath: definitions.json
         - name: data
           mountPath: /var/lib/rabbitmq
           subPath: rabbitmq
@@ -119,16 +123,18 @@ spec:
       volumes:
       - name: tmp-rabbitmq
         emptyDir: {}
-      - name: config
+      - name: rabbitmq-configs
         configMap:
           name: rabbitmq-config
           items:
           - key: rabbitmq.conf
             path: rabbitmq.conf
+      - name: rabbitmq-definitions
+        configMap:
+          name: rabbitmq-config
+          items:
           - key: rabbitmq.definitions
             path: definitions.json
-          - key: rabbitmq.plugins
-            path: enabled_plugins
       - name: script
         configMap:
           name: rabbitmq-config
