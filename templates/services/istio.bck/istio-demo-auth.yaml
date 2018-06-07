@@ -768,7 +768,8 @@ data:
     mixerCheckServer: istio-policy.istio-system.svc.cluster.local:15004
     mixerReportServer: istio-telemetry.istio-system.svc.cluster.local:15004
     # This is the ingress service name, update if you used a different name
-    ingressService: istio-ingress
+    ingressService: istio-ingressgateway
+    # ingressService: istio-ingress
     #
     # Along with discoveryRefreshDelay, this setting determines how
     # frequently should Envoy fetch and update its internal configuration

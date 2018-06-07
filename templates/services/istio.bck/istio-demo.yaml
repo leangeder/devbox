@@ -755,8 +755,7 @@ data:
     mixerCheckServer: istio-policy.istio-system.svc.cluster.local:15004
     mixerReportServer: istio-telemetry.istio-system.svc.cluster.local:15004
     # This is the ingress service name, update if you used a different name
-    ingressService: istio-ingressgateway
-    # ingressService: istio-ingress
+    ingressService: istio-ingress
     #
     # Along with discoveryRefreshDelay, this setting determines how
     # frequently should Envoy fetch and update its internal configuration
@@ -2686,11 +2685,11 @@ spec:
           image: "docker.io/istio/proxyv2:0.8.0"
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 80
-              hostPort: 80
-            - containerPort: 443
-              hostPort: 443
-            - containerPort: 31400
+          - containerPort: 80
+            hostPort: 80
+          - containerPort: 443
+            hostPort: 443
+          - containerPort: 31400
           args:
           - proxy
           - router

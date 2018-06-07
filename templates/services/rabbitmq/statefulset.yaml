@@ -42,28 +42,40 @@ spec:
         - name: tmp-rabbitmq
           mountPath: /tmp/rabbitmq
       containers:
-      - name: rabbitmq-autocluster
+      - name: rabbitmq
         image: {{.rabbitmq.image}}
-        # imagePullPolicy: Always
-        command:
-        - /tmp/script.sh
+        # command:
+        # - /bin/bash
+        # - -c
+        # - >
+        #   while true; do sleep 2; done;
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - "/bin/sh"
+              - "-c"
+              - >
+                 cp /tmp/rabbitmq/* /plugins/;
         ports:
         - name: http
           containerPort: 15672
-        - name: amqp
+        - name: tcp-amqp
           containerPort: 5672
-        - name: epmd
+        - name: tcp-epmd
           containerPort: 4369
+        - name: tcp-dist
+          containerPort: 25672
         # livenessProbe:
         #   exec:
         #     command: ["rabbitmqctl", "status"]
-        #   initialDelaySeconds: 30
-        #   timeoutSeconds: 5
+        #   initialDelaySeconds: 60
+        #   timeoutSeconds: 60
         # readinessProbe:
         #   exec:
         #     command: ["rabbitmqctl", "status"]
-        #   initialDelaySeconds: 10
-        #   timeoutSeconds: 5
+        #   initialDelaySeconds: 60
+        #   timeoutSeconds: 60
         env:
         - name: MY_POD_IP
           valueFrom:
@@ -71,53 +83,46 @@ spec:
               fieldPath: status.podIP
         - name: RABBITMQ_USE_LONGNAME
           value: "true"
-        - name: RABBITMQ_NODENAME
-          value: "rabbit@$(MY_POD_IP)"
-        - name: AUTOCLUSTER_TYPE
-          value: "k8s"
-        - name: AUTOCLUSTER_DELAY
-          value: "10"
-        - name: K8S_ADDRESS_TYPE
-          value: "ip"
-        - name: AUTOCLUSTER_CLEANUP
-          value: "true"
-        - name: CLEANUP_WARN_ONLY
-          value: "false"
-        - name: K8S_SERVICE_NAME
-          value: "rabbitmq"
         - name: RABBITMQ_ERLANG_COOKIE
           valueFrom:
             secretKeyRef:
               name: cookie
               key: rabbitmq.cookie
-#         resources:
-#           requests:
-# {{- if ne .rabbitmq.resources.requests.memory "" }}
-#             memory: "{{ .rabbitmq.resources.requests.memory }}"
-# {{- end }}
-# {{- if ne .rabbitmq.resources.requests.cpu "" }}
-#             cpu: "{{ .rabbitmq.resources.requests.cpu }}"
-# {{- end }}
-#           limits:
-# {{- if ne .rabbitmq.resources.limits.memory "" }}
-#             memory: "{{ .rabbitmq.resources.limits.memory }}"
-# {{- end }}
-# {{- if ne .rabbitmq.resources.limits.cpu "" }}
-#             cpu: "{{ .rabbitmq.resources.limits.cpu }}"
-# {{- end }}
+        - name: RABBITMQ_NODENAME
+          value: "rabbit@localhost"
+          # value: "rabbit@$(MY_POD_IP)"
+        - name: AUTOCLUSTER_TYPE
+          value: "k8s"
+        - name: AUTOCLUSTER_DELAY
+          value: "10"
+        - name: AUTOCLUSTER_CLEANUP
+          value: "true"
+        - name: CLEANUP_WARN_ONLY
+          value: "false"
+        resources:
+          requests:
+{{- if ne .rabbitmq.resources.requests.memory "" }}
+            memory: "{{ .rabbitmq.resources.requests.memory }}"
+{{- end }}
+{{- if ne .rabbitmq.resources.requests.cpu "" }}
+            cpu: "{{ .rabbitmq.resources.requests.cpu }}"
+{{- end }}
+          limits:
+{{- if ne .rabbitmq.resources.limits.memory "" }}
+            memory: "{{ .rabbitmq.resources.limits.memory }}"
+{{- end }}
+{{- if ne .rabbitmq.resources.limits.cpu "" }}
+            cpu: "{{ .rabbitmq.resources.limits.cpu }}"
+{{- end }}
         volumeMounts:
         - name: rabbitmq-configs
-          mountPath: /etc/rabbitmq/rabbitmq.conf
-          subPath: rabbitmq.conf
+          mountPath: /etc/rabbitmq
         - name: rabbitmq-definitions
-          mountPath: /etc/rabbitmq/definitions.json
+          mountPath: /tmp/definitions.json
           subPath: definitions.json
         - name: data
           mountPath: /var/lib/rabbitmq
           subPath: rabbitmq
-        - name: script
-          mountPath: /tmp/script.sh
-          subPath: script.sh
         - name: tmp-rabbitmq
           mountPath: /tmp/rabbitmq
       volumes:
@@ -129,16 +134,14 @@ spec:
           items:
           - key: rabbitmq.conf
             path: rabbitmq.conf
+          - key: enabled_plugins
+            path: enabled_plugins
       - name: rabbitmq-definitions
         configMap:
           name: rabbitmq-config
           items:
           - key: rabbitmq.definitions
             path: definitions.json
-      - name: script
-        configMap:
-          name: rabbitmq-config
-          defaultMode: 0755
   volumeClaimTemplates:
   - metadata:
       name: data

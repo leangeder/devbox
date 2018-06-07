@@ -1,0 +1,220 @@
+# apiVersion: networking.istio.io/v1alpha3
+# kind: DestinationRule
+# metadata:
+#   name: "kubernetes-master"
+#   namespace: "rabbitmq"
+# spec:
+#   host: "kubernetes.default.svc.cluster.local"
+#   trafficPolicy:
+#     tls:
+#       mode: DISABLE
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: gateway-apps-api
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - api.beamery.local
+    - beamery.local
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: services
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 9200
+      name: es
+      protocol: HTTP
+    hosts:
+    - es
+  - port:
+      number: 9300
+      name: es
+      protocol: TCP
+    hosts:
+    - es
+  - port:
+      number: 15672
+      name: rabbitmq
+      protocol: HTTP
+    hosts:
+    - rabbitmq
+  - port:
+      number: 5672
+      name: rabbitmq
+      protocol: TCP
+    hosts:
+    - rabbitmq
+  - port:
+      number: 4369
+      name: rabbitmq
+      protocol: TCP
+    hosts:
+    - rabbitmq
+  - port:
+      number: 25672
+      name: rabbitmq
+      protocol: TCP
+    hosts:
+    - rabbitmq
+  - port:
+      number: 6379
+      name: redis
+      protocol: TCP
+    hosts:
+    - redis
+  - port:
+      number: 16379
+      name: redis
+      protocol: TCP
+    hosts:
+    - redis
+  - port:
+      number: 27017
+      name: mongodb
+      protocol: TCP
+    hosts:
+    - mongodb
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: app-site-ng2
+  namespace: preview
+spec:
+  hosts:
+  - beamery.local
+  gateways:
+  - gateway-apps-api
+  http:
+  - route:
+    - destination:
+        host: app-site-ng2
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: api-core
+  namespace: preview
+spec:
+  hosts:
+  - api.beamery.local
+  gateways:
+  - gateway-apps-api
+  http:
+  - route:
+    - destination:
+        host: api-core
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: elasticsearch
+  namespace: preview
+spec:
+  hosts:
+  - es
+  http:
+  - route:
+    - destination:
+        host: elasticsearch
+        port:
+          number: 9200
+  tcp:
+  - route:
+    - destination:
+        host: elasticsearch
+        port:
+          number: 9300
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: redis
+  namespace: preview
+spec:
+  hosts:
+  - redis
+  tcp:
+  - match:
+    - port: 6379
+    route:
+    - destination:
+        host: redis-cluster
+        port:
+          number: 6379
+  - match:
+    - port: 16379
+    route:
+    - destination:
+        host: redis-cluster
+        port:
+          number: 16379
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: mongodb
+  namespace: preview
+spec:
+  hosts:
+  - mongodb
+  tcp:
+  - match:
+    - port: 27017
+    route:
+    - destination:
+        host: mongodb
+        port:
+          number: 27017
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: rabbitmq
+  namespace: preview
+spec:
+  hosts:
+  - rabbitmq
+  http:
+  - route:
+    - destination:
+        host: rabbitmq
+        port:
+          number: 15672
+  tcp:
+  - match:
+    - port: 5672
+    route:
+    - destination:
+        host: rabbitmq
+        port:
+          number: 5672
+  - match:
+    - port: 4369
+    route:
+    - destination:
+        host: rabbitmq
+        port:
+          number: 4369
+  - match:
+    - port: 25672
+    route:
+    - destination:
+        host: rabbitmq
+        port:
+          number: 25672

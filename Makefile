@@ -61,7 +61,7 @@ endif
 
 # $(PATH_BEAMERY_ROOT):
 
-.up: .minikube
+up: .minikube
 ifeq (0,$(shell minikube status | grep Running | wc -l))
 	@mkdir -p $$HOME/minikube_storage
 	@minikube config set WantReportErrorPrompt false
@@ -70,7 +70,7 @@ ifeq (0,$(shell minikube status | grep Running | wc -l))
 	@minikube start --memory=6144 --extra-config=apiserver.authorization-mode=RBAC --extra-config=controller-manager.cluster-signing-cert-file="/var/lib/localkube/certs/ca.crt" --extra-config=controller-manager.cluster-signing-key-file="/var/lib/localkube/certs/ca.key" --extra-config=apiserver.admission-control="NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
 endif
 	@-minikube addons disable ingress
-	@minikube addons enable heapster
+	@-minikube addons disable heapster
 
 delete:
 	@kubectl delete -R -f $(PATH_PROJECT)/deployment/
@@ -80,7 +80,7 @@ delete:
 	@vortex --template $(PATH_TEMPLATE)/services/storages/ --output $(PATH_DESTINATION)/services/storages/ -varpath environments/services/$(ENV).yaml
 	@kubectl apply -f $(PATH_DESTINATION)/services/storages/ --overwrite
 
-services: .up .storage .es .mongodb .redis .rabbitmq .monstache
+services: up .storage .es .mongodb .redis .rabbitmq .monstache
 # 	@rm -rf $(PATH_DESTINATION)/services/mongodb/
 # 	@vortex --template $(PATH_TEMPLATE)/services/mongodb --output $(PATH_DESTINATION)/services/mongodb/ -varpath $(PATH_ENVIRONMENT)
 # 	@kubectl apply -f $(PATH_DESTINATION)/services/mongodb/namespace.yaml --overwrite

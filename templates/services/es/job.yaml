@@ -16,6 +16,8 @@ spec:
         app: es-index
         component: elasticsearch
         role: jobs
+      annotations:
+        sidecar.istio.io/inject: "false"
     spec:
       restartPolicy: Never
       containers:
@@ -77,6 +79,8 @@ spec:
             app: es-backups
             component: elasticsearch
             role: cronjobs
+          annotations:
+            sidecar.istio.io/inject: "false"
         spec:
           restartPolicy: OnFailure
           containers:

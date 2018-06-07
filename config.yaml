@@ -107,7 +107,8 @@ data:
             redisPassword: '',
             redisDatabase: 0,
             amqp: {
-                connectionUrl: 'amqp://guest:guest@rabbitmq.rabbitmq.svc.cluster.local/',
+                connectionUrl: 'amqp://beamery:Ub3rm3nch@rabbitmq/',
+                // connectionUrl: 'amqp://beamery:Ub3rm3nch@rabbitmq.rabbitmq.svc.cluster.local/',
                 // connectionUrl: 'amqp://guest:guest@l5d-tcp.linkerd.svc.cluster.local:7494/',
                 heartBeat: '600'
             },
@@ -158,12 +159,13 @@ data:
     
         // Connection Parameters: Connection parameteres for our Databases (Mongo and Redis)
     
-        mongo: process.env.MONGO || 'mongodb://root:root@mongodb.mongodb.svc.cluster.local:27017/seed?authSource=admin',
+        // mongo: process.env.MONGO || 'mongodb://root:root@mongodb.mongodb.svc.cluster.local:27017/seed?authSource=admin',
         // mongo: process.env.MONGO || 'mongodb://root:root@l5d-tcp.linkerd.svc.cluster.local:7484/seed?authSource=admin',
+        mongo: process.env.MONGO || 'mongodb://root:root@mongodb:27017/seed?authSource=admin',
         mongoPem: false,
         elasticsearch: {
-            // host: 'http://es',
-            host: 'http://elasticsearch.elasticsearch.svc.cluster.local:9200',
+            host: 'http://es:9200',
+            // host: 'http://elasticsearch.elasticsearch.svc.cluster.local:9200',
             apiVersion: '5.0'
         },
     
@@ -180,7 +182,8 @@ data:
             sentinels: [],
             name: null,
             // host: 'redis://l5d-tcp.linkerd.svc.cluster.local:7474/'
-            host: 'redis://redis-cluster.redis.svc.cluster.local:6379/'
+            host: 'redis://redis:6379/'
+            // host: 'redis://redis-cluster.redis.svc.cluster.local:6379/'
         },
     
         /**

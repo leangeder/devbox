@@ -2,24 +2,6 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: rabbitmq
-  namespace: {{.rabbitmq.namespace}}
-  labels:
-    app: rabbitmq
-spec:
-  ports:
-  - name: amqp
-    port: 5672
-  - name: cluster
-    port: 4369
-  - name: dist
-    port: 25672
-  selector:
-    app: rabbitmq
----
-kind: Service
-apiVersion: v1
-metadata:
   name: rabbitmq-management
   namespace: {{.rabbitmq.namespace}}
   labels:
@@ -28,5 +10,24 @@ spec:
   ports:
   - name: http
     port: 15672
+  selector:
+    app: rabbitmq
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: rabbitmq
+  namespace: {{.rabbitmq.namespace}}
+  labels:
+    app: rabbitmq
+spec:
+  clusterIP: None
+  ports:
+  - name: tcp-amqp
+    port: 5672
+  - name: tcp-epmd
+    port: 4369
+  - name: tcp-dist
+    port: 25672
   selector:
     app: rabbitmq

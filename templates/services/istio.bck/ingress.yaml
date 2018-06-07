@@ -1,60 +1,128 @@
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: istio-test
-  annotations:
-    kubernetes.io/ingress.class: istio
-spec:
-  rules:
-  - host: beamery.local
-    http:
-      paths:
-      - path: /.*
-        backend:
-          serviceName: app-site-ng2
-          servicePort: http
-  - host: api.beamery.local
-    http:
-      paths:
-      - path: /.*
-        backend:
-          serviceName: api-core
-          servicePort: http
+# ---
+# apiVersion: extensions/v1beta1
+# kind: Ingress
+# metadata:
+#   name: istio-test
+#   annotations:
+#     kubernetes.io/ingress.class: istio
+# spec:
+#   rules:
+#   - host: beamery.local
+#     http:
+#       paths:
+#       - path: /.*
+#         backend:
+#           serviceName: app-site-ng2
+#           servicePort: http
+#   - host: api.beamery.local
+#     http:
+#       paths:
+#       - path: /.*
+#         backend:
+#           serviceName: api-core
+#           servicePort: http
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
-  name: istio-gateway
+  name: app-site-ng2-gateway
 spec:
   selector:
     istio: ingressgateway # use Istio default gateway implementation
   servers:
-  - port:
+  - hosts:
+    - "beamery.local"
+    port:
       number: 80
       name: http
       protocol: HTTP
-    hosts:
-    - "beamery.local"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: api-core-gateway
+spec:
+  selector:
+    istio: ingressgateway # use Istio default gateway implementation
+  servers:
+  - hosts:
     - "api.beamery.local"
+    port:
+      number: 9089
+      name: http
+      protocol: HTTP
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: istio-virtualservice
+  name: app-site-ng2
 spec:
   hosts:
   - "beamery.local"
   gateways:
-  - istio-gateway
+  - app-site-ng2-gateway
   http:
-  - match:
-    - uri:
-        prefix: /status
-    - uri:
-        prefix: /delay
-    route:
+  - route:
     - destination:
+        host: app-site-ng2.preview.svc.cluster.local
         port:
-          number: 8000
-        host: httpbin
+          number: 80
+          name: http
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: api-core
+spec:
+  hosts:
+  - "api.beamery.local"
+  gateways:
+  - api-core-gateway
+  http:
+  - route:
+    - destination:
+        host: api-core.preview.svc.cluster.local
+        port:
+          number: 9089
+          name: http
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: ServiceEntry
+# metadata:
+#   name: test
+# spec:
+#   host:
+#   - api.beamery.local
+#   ports:
+#   - number: 80
+#     name: http
+#     protocol: HTTP
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: DestinationRule
+# metadata:
+#   name: test
+# spec:
+#   host: api.beamery.local
+#   trafficPolicy:
+#     tls:
+#       mode: SIMPLE
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: DestinationRule
+# metadata:
+#   name: be-destination
+# spec:
+#   host: be.default.svc.cluster.local
+#   trafficPolicy:
+#     tls:
+#       mode: ISTIO_MUTUAL  
+#     loadBalancer:
+#       simple: ROUND_ROBIN     
+#   subsets:
+#   - name: v1
+#     labels:
+#       version: v1
+#   - name: v2
+#     labels:
+#       version: v2
