@@ -13,7 +13,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
   name: gateway-apps-api
-  namespace: istio-system
+  namespace: preview
 spec:
   selector:
     istio: ingressgateway
@@ -30,10 +30,10 @@ apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
   name: services
-  namespace: istio-system
+  namespace: preview
 spec:
   selector:
-    istio: ingressgateway
+    istio: pilot
   servers:
   - port:
       number: 9200
@@ -74,19 +74,19 @@ spec:
   - port:
       number: 6379
       name: redis
-      protocol: TCP
+      protocol: REDIS
     hosts:
     - redis
   - port:
       number: 16379
       name: redis
-      protocol: TCP
+      protocol: REDIS
     hosts:
     - redis
   - port:
       number: 27017
       name: mongodb
-      protocol: TCP
+      protocol: MONGO
     hosts:
     - mongodb
 ---
@@ -128,16 +128,23 @@ metadata:
 spec:
   hosts:
   - es
+  gateways:
+  - services
   http:
-  - route:
+  - match:
+    - port: 9200
+    route:
     - destination:
-        host: elasticsearch
+        host: elasticsearch.elasticsearch.svc.cluster.local
         port:
           number: 9200
   tcp:
-  - route:
+  - match:
+    - port: 9300
+      sourceSubnet: "172.17.16.0/24"
+    route:
     - destination:
-        host: elasticsearch
+        host: elasticsearch.elasticsearch.svc.cluster.local
         port:
           number: 9300
 ---
@@ -149,19 +156,23 @@ metadata:
 spec:
   hosts:
   - redis
+  gateways:
+  - services
   tcp:
   - match:
     - port: 6379
+      sourceSubnet: "172.17.16.0/24"
     route:
     - destination:
-        host: redis-cluster
+        host: redis-cluster.redis.svc.cluster.local
         port:
           number: 6379
   - match:
     - port: 16379
+      sourceSubnet: "172.17.16.0/24"
     route:
     - destination:
-        host: redis-cluster
+        host: redis-cluster.redis.svc.cluster.local
         port:
           number: 16379
 ---
@@ -173,12 +184,15 @@ metadata:
 spec:
   hosts:
   - mongodb
+  gateways:
+  - services
   tcp:
   - match:
     - port: 27017
+      sourceSubnet: "172.17.16.0/24"
     route:
     - destination:
-        host: mongodb
+        host: mongodb.mongodb.svc.cluster.local
         port:
           number: 27017
 ---
@@ -190,31 +204,38 @@ metadata:
 spec:
   hosts:
   - rabbitmq
+  gateways:
+  - services
   http:
-  - route:
+  - match:
+    - port: 15672
+    route:
     - destination:
-        host: rabbitmq
+        host: rabbitmq.rabbitmq.svc.cluster.local
         port:
           number: 15672
   tcp:
   - match:
     - port: 5672
+      sourceSubnet: "172.17.16.0/24"
     route:
     - destination:
-        host: rabbitmq
+        host: rabbitmq.rabbitmq.svc.cluster.local
         port:
           number: 5672
   - match:
     - port: 4369
+      sourceSubnet: "172.17.16.0/24"
     route:
     - destination:
-        host: rabbitmq
+        host: rabbitmq.rabbitmq.svc.cluster.local
         port:
           number: 4369
   - match:
     - port: 25672
+      sourceSubnet: "172.17.16.0/24"
     route:
     - destination:
-        host: rabbitmq
+        host: rabbitmq.rabbitmq.svc.cluster.local
         port:
           number: 25672
