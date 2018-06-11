@@ -1,0 +1,80 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: istio-mixer-post-install
+  namespace: istio-system
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-delete-policy": before-hook-creation
+  labels:
+    app: mixer
+    chart: mixer-0.8.0
+    release: RELEASE-NAME
+    heritage: Tiller
+spec:
+  template:
+    metadata:
+      name: istio-mixer-post-install
+      labels:
+        app: mixer
+        release: RELEASE-NAME
+    spec:
+      serviceAccountName: istio-mixer-post-install-account
+      containers:
+        - name: hyperkube
+          image: "quay.io/coreos/hyperkube:v1.7.6_coreos.0"
+          command:
+            - ./kubectl
+            - apply
+            - -f
+            - /tmp/mixer/custom-resources.yaml
+          volumeMounts:
+            - mountPath: "/tmp/mixer"
+              name: tmp-configmap-mixer
+      volumes:
+        - name: tmp-configmap-mixer
+          configMap:
+            name: istio-mixer-custom-resources
+      restartPolicy: Never # CRD might take some time till they are available to consume
+
+---
+# Source: istio/charts/security/templates/cleanup-old-ca.yaml
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: istio-cleanup-old-ca
+  namespace: istio-system
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-delete-policy": hook-succeeded
+  labels:
+    app: security
+    chart: security-0.8.0
+    release: RELEASE-NAME
+    heritage: Tiller
+spec:
+  template:
+    metadata:
+      name: istio-cleanup-old-ca
+      labels:
+        app: security
+        release: RELEASE-NAME
+    spec:
+      serviceAccountName: istio-cleanup-old-ca-service-account
+      containers:
+        - name: hyperkube
+          image: "quay.io/coreos/hyperkube:v1.7.6_coreos.0"
+          command:
+          - /bin/bash
+          - -c
+          - >
+              NS="-n istio-system";
+              ./kubectl get deploy istio-ca $NS;
+              if [[ $? = 0 ]]; then ./kubectl delete deploy istio-ca $NS; fi;
+              ./kubectl get serviceaccount istio-ca-service-account $NS;
+              if [[ $? = 0 ]]; then ./kubectl delete serviceaccount istio-ca-service-account $NS; fi;
+              ./kubectl get service istio-ca-ilb $NS;
+              if [[ $? = 0 ]]; then ./kubectl delete service istio-ca-ilb $NS; fi
+      restartPolicy: Never

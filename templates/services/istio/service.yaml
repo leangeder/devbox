@@ -1,60 +1,3 @@
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: istio-pilot
-  namespace: {{.istio.namespace}}
-  labels:
-    istio: pilot
-spec:
-  ports:
-  - port: 15003
-    name: http-old-discovery
-  - port: 15005
-    name: https-discovery
-  - port: 15007
-    name: http-discovery
-  - port: 15010
-    name: grpc-xds
-  - port: 15011
-    name: https-xds
-  - port: 8080
-    name: http-legacy-discovery
-  - port: 9093
-    name: http-monitoring
-  selector:
-    istio: pilot
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: istio-ingress
-  namespace: {{.istio.namespace}}
-  labels:
-    istio: ingress
-spec:
-  type: LoadBalancer
-  # externalTrafficPolicy: Local
-  ports:
-  - name: http
-    port: 80
-  - name: https
-    port: 443
-  selector:
-    istio: ingress
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: istio-sidecar-injector
-  namespace: {{.istio.namespace}}
-  labels:
-    istio: sidecar-injector
-spec:
-  ports:
-  - port: 443
-  selector:
-    istio: sidecar-injector
 # ---
 # apiVersion: v1
 # kind: Service
@@ -65,10 +8,20 @@ spec:
 #     istio: pilot
 # spec:
 #   ports:
-#     - name: http-apiserver
-#       port: 8081
-#     - name: http-discovery
-#       port: 8080
+#   - port: 15003
+#     name: http-old-discovery
+#   - port: 15005
+#     name: https-discovery
+#   - port: 15007
+#     name: http-discovery
+#   - port: 15010
+#     name: grpc-xds
+#   - port: 15011
+#     name: https-xds
+#   - port: 8080
+#     name: http-legacy-discovery
+#   - port: 9093
+#     name: http-monitoring
 #   selector:
 #     istio: pilot
 # ---
@@ -80,13 +33,370 @@ spec:
 #   labels:
 #     istio: ingress
 # spec:
-#   externalTrafficPolicy: Local
+#   type: LoadBalancer
+#   # externalTrafficPolicy: Local
 #   ports:
-#     - name: http
-#       port: 80
-#     - name: https
-#       port: 443
+#   - name: http
+#     port: 80
+#   - name: https
+#     port: 443
 #   selector:
 #     istio: ingress
-#   type: LoadBalancer
 # ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: istio-sidecar-injector
+#   namespace: {{.istio.namespace}}
+#   labels:
+#     istio: sidecar-injector
+# spec:
+#   ports:
+#   - port: 443
+#   selector:
+#     istio: sidecar-injector
+# # ---
+# # apiVersion: v1
+# # kind: Service
+# # metadata:
+# #   name: istio-pilot
+# #   namespace: {{.istio.namespace}}
+# #   labels:
+# #     istio: pilot
+# # spec:
+# #   ports:
+# #     - name: http-apiserver
+# #       port: 8081
+# #     - name: http-discovery
+# #       port: 8080
+# #   selector:
+# #     istio: pilot
+# # ---
+# # apiVersion: v1
+# # kind: Service
+# # metadata:
+# #   name: istio-ingress
+# #   namespace: {{.istio.namespace}}
+# #   labels:
+# #     istio: ingress
+# # spec:
+# #   externalTrafficPolicy: Local
+# #   ports:
+# #     - name: http
+# #       port: 80
+# #     - name: https
+# #       port: 443
+# #   selector:
+# #     istio: ingress
+# #   type: LoadBalancer
+# # ---
+
+
+
+
+
+
+
+
+---
+# Source: istio/charts/egressgateway/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: istio-egressgateway
+  namespace: istio-system    
+  labels:
+    chart: egressgateway-0.8.0
+    release: RELEASE-NAME
+    heritage: Tiller
+    istio: egressgateway
+spec:
+  type: ClusterIP
+  selector:
+    istio: egressgateway
+  ports:
+    -
+      name: http
+      port: 80
+    -
+      name: https
+      port: 443
+
+---
+# Source: istio/charts/grafana/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: istio-system
+  annotations:
+    auth.istio.io/3000: NONE
+  labels:
+    app: grafana
+    chart: grafana-0.1.0
+    release: RELEASE-NAME
+    heritage: Tiller
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+      name: http
+  selector:
+    app: grafana
+
+---
+# Source: istio/charts/ingressgateway/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: istio-ingressgateway
+  namespace: istio-system    
+  labels:
+    chart: ingressgateway-0.8.0
+    release: RELEASE-NAME
+    heritage: Tiller
+    istio: ingressgateway
+spec:
+  type: LoadBalancer
+  selector:
+    istio: ingressgateway
+  ports:
+    -
+      name: http
+      nodePort: 31380
+      port: 80
+    -
+      name: https
+      nodePort: 31390
+      port: 443
+    -
+      name: tcp
+      nodePort: 31400
+      port: 31400
+
+---
+# Source: istio/charts/mixer/templates/service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: istio-policy
+  namespace: istio-system
+  labels:
+    chart: mixer-0.8.0
+    release: RELEASE-NAME
+    istio: mixer
+spec:
+  ports:
+  - name: grpc-mixer
+    port: 9091
+  - name: grpc-mixer-mtls
+    port: 15004
+  - name: http-monitoring
+    port: 9093
+  selector:
+    istio: mixer
+    istio-mixer-type: policy
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: istio-telemetry
+  namespace: istio-system
+  labels:
+    chart: mixer-0.8.0
+    release: RELEASE-NAME
+    istio: mixer
+spec:
+  ports:
+  - name: grpc-mixer
+    port: 9091
+  - name: grpc-mixer-mtls
+    port: 15004
+  - name: http-monitoring
+    port: 9093
+  - name: prometheus
+    port: 42422
+  selector:
+    istio: mixer
+    istio-mixer-type: telemetry
+---
+
+---
+# Source: istio/charts/mixer/templates/statsdtoprom.yaml
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: istio-statsd-prom-bridge
+  namespace: istio-system
+  labels:
+    chart: mixer-0.8.0
+    release: RELEASE-NAME
+    istio: statsd-prom-bridge
+spec:
+  ports:
+  - name: statsd-prom
+    port: 9102
+  - name: statsd-udp
+    port: 9125
+    protocol: UDP
+  selector:
+    istio: statsd-prom-bridge
+---
+# Source: istio/charts/pilot/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: istio-pilot
+  namespace: istio-system
+  labels:
+    app: istio-pilot
+    chart: pilot-0.8.0
+    release: RELEASE-NAME
+    heritage: Tiller
+spec:
+  ports:
+  - port: 15003
+    name: http-old-discovery # mTLS or non-mTLS depending on auth setting
+  - port: 15005
+    name: https-discovery # always mTLS
+  - port: 15007
+    name: http-discovery # always plain-text
+  - port: 15010
+    name: grpc-xds # direct
+  - port: 15011
+    name: https-xds # mTLS
+  - port: 8080
+    name: http-legacy-discovery # direct
+  - port: 9093
+    name: http-monitoring
+  selector:
+    istio: pilot
+
+---
+# Source: istio/charts/prometheus/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: istio-system
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    name: prometheus
+spec:
+  selector:
+    app: prometheus
+  ports:
+  - name: http-prometheus
+    protocol: TCP
+    port: 9090
+
+---
+# Source: istio/charts/security/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  # we use the normal name here (e.g. 'prometheus')
+  # as grafana is configured to use this as a data source
+  name: istio-citadel
+  namespace: istio-system
+  labels:
+    app: istio-citadel
+spec:
+  ports:
+    - name: grpc-citadel
+      port: 8060
+      targetPort: 8060
+      protocol: TCP
+    - name: http-monitoring
+      port: 9093
+  selector:
+    istio: citadel
+
+---
+# Source: istio/charts/servicegraph/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: servicegraph
+  namespace: istio-system
+  labels:
+    app: servicegraph
+    chart: servicegraph-0.1.0
+    release: RELEASE-NAME
+    heritage: Tiller
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8088
+      targetPort: 8088
+      protocol: TCP
+      name: http
+  selector:
+    app: servicegraph
+
+---
+# Source: istio/charts/sidecarInjectorWebhook/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: istio-sidecar-injector
+  namespace: istio-system
+  labels:
+    istio: sidecar-injector
+spec:
+  ports:
+  - port: 443
+  selector:
+    istio: sidecar-injector
+
+---
+# Source: istio/charts/tracing/templates/service.yaml
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: zipkin
+    namespace: istio-system
+    labels:
+      app: jaeger
+      chart: tracing-0.1.0
+      release: RELEASE-NAME
+      heritage: Tiller
+  spec:
+    type: ClusterIP
+    ports:
+      - port: 9411
+        targetPort: 9411
+        protocol: TCP
+        name: http
+    selector:
+      app: jaeger
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: tracing
+    namespace: istio-system
+    labels:
+      app: jaeger
+      chart: tracing-0.1.0
+      release: RELEASE-NAME
+      heritage: Tiller
+  spec:
+    ports:
+      - name: query-http
+        port: 80
+        protocol: TCP
+        targetPort: 16686
+    selector:
+      app: jaeger
+    type: LoadBalancer
+
+

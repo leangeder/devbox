@@ -1,0 +1,45 @@
+
+---
+# Source: istio/charts/egressgateway/templates/autoscale.yaml
+
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+    name: istio-egressgateway
+    namespace: istio-system
+spec:
+    maxReplicas: 1
+    minReplicas: 1
+    scaleTargetRef:
+      apiVersion: apps/v1beta1
+      kind: Deployment
+      name: istio-egressgateway
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          targetAverageUtilization: 80
+
+
+---
+# Source: istio/charts/ingressgateway/templates/autoscale.yaml
+
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+    name: istio-ingressgateway
+    namespace: istio-system
+spec:
+    maxReplicas: 1
+    minReplicas: 1
+    scaleTargetRef:
+      apiVersion: apps/v1beta1
+      kind: Deployment
+      name: istio-ingressgateway
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          targetAverageUtilization: 80
+
+

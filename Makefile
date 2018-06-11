@@ -67,7 +67,7 @@ ifeq (0,$(shell minikube status | grep Running | wc -l))
 	@minikube config set WantReportErrorPrompt false
 	# # minikube start --memory=6144 --extra-config=controller-manager.cluster-signing-cert-file="/var/lib/localkube/certs/ca.crt" --extra-config=controller-manager.cluster-signing-key-file="/var/lib/localkube/certs/ca.key" --extra-config=apiserver.admission-control="NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
 	# @minikube start --memory=6144 --mount --mount-string=$$HOME/minikube_storage:/tmp/hostpath-provisioner --extra-config=apiserver.authorization-mode=RBAC --extra-config=controller-manager.cluster-signing-cert-file="/var/lib/localkube/certs/ca.crt" --extra-config=controller-manager.cluster-signing-key-file="/var/lib/localkube/certs/ca.key" --extra-config=apiserver.admission-control="NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
-	@minikube start --memory=6144 --extra-config=apiserver.authorization-mode=RBAC --extra-config=controller-manager.cluster-signing-cert-file="/var/lib/localkube/certs/ca.crt" --extra-config=controller-manager.cluster-signing-key-file="/var/lib/localkube/certs/ca.key" --extra-config=apiserver.admission-control="NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
+	@minikube start --memory=6144 --extra-config=controller-manager.cluster-signing-cert-file="/var/lib/localkube/certs/ca.crt" --extra-config=controller-manager.cluster-signing-key-file="/var/lib/localkube/certs/ca.key" --extra-config=apiserver.admission-control="NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
 endif
 	@-minikube addons disable ingress
 	@-minikube addons disable heapster
@@ -91,49 +91,49 @@ services: up .storage .es .mongodb .redis .rabbitmq .monstache
 	@rm -rf $(PATH_DESTINATION)/services/es/
 	@kubectl create configmap config-jobs --namespace={{.elasticsearch.namespace}} --from-file=$(PATH_PROJECT)/templates/services/es/rebuildElasticsearchIndices.sh --from-file=$(PATH_PROJECT)/templates/services/es/files/mappings_Seed_Activities.json --from-file=$(PATH_PROJECT)/templates/services/es/files/mappings_Seed_Contacts.json --from-file=$(PATH_PROJECT)/templates/services/es/files/mappings_Seed_Events.json --from-file=$(PATH_PROJECT)/templates/services/es/files/mappings_Seed_Organisations.json --from-file=$(PATH_PROJECT)/templates/services/es/files/mappings_Seed_VacancyActivities.json --dry-run -o yaml > $(PATH_PROJECT)/templates/services/es/config_job.yaml
 	@vortex --template $(PATH_TEMPLATE)/services/es --output $(PATH_DESTINATION)/services/es -varpath environments/services/$(ENV).yaml
-	@kubectl apply -f $(PATH_DESTINATION)/services/es/namespace.yaml --overwrite
+	# @kubectl apply -f $(PATH_DESTINATION)/services/es/namespace.yaml --overwrite
 	@rm -f $(PATH_DESTINATION)/services/es/namespace.yaml
 	@kubectl replace -f $(PATH_DESTINATION)/services/es/ --force --validate
 
 .mongodb:
 	@rm -rf $(PATH_DESTINATION)/services/mongodb/
 	@vortex --template $(PATH_TEMPLATE)/services/mongodb --output $(PATH_DESTINATION)/services/mongodb -varpath  environments/services/$(ENV).yaml
-	@kubectl apply -f $(PATH_DESTINATION)/services/mongodb/namespace.yaml --overwrite
+	# @kubectl apply -f $(PATH_DESTINATION)/services/mongodb/namespace.yaml --overwrite
 	@rm -f $(PATH_DESTINATION)/services/mongodb/namespace.yaml
 	@kubectl replace -f $(PATH_DESTINATION)/services/mongodb/ --force --validate
 
 .redis:
 	@rm -rf $(PATH_DESTINATION)/services/redis/
 	@vortex --template $(PATH_TEMPLATE)/services/redis --output $(PATH_DESTINATION)/services/redis -varpath environments/services/$(ENV).yaml
-	@kubectl apply -f $(PATH_DESTINATION)/services/redis/namespace.yaml --overwrite
+	# @kubectl apply -f $(PATH_DESTINATION)/services/redis/namespace.yaml --overwrite
 	@rm -f $(PATH_DESTINATION)/services/redis/namespace.yaml
 	@kubectl replace -f $(PATH_DESTINATION)/services/redis/ --force --validate
 
 .rabbitmq:
 	@rm -rf $(PATH_DESTINATION)/services/rabbitmq/
 	@vortex --template $(PATH_TEMPLATE)/services/rabbitmq --output $(PATH_DESTINATION)/services/rabbitmq -varpath environments/services/$(ENV).yaml
-	@kubectl apply -f $(PATH_DESTINATION)/services/rabbitmq/namespace.yaml --overwrite
+	# @kubectl apply -f $(PATH_DESTINATION)/services/rabbitmq/namespace.yaml --overwrite
 	@rm -f $(PATH_DESTINATION)/services/rabbitmq/namespace.yaml
 	@kubectl replace -f $(PATH_DESTINATION)/services/rabbitmq/ --force --validate
 
 .monstache:
 	@rm -rf $(PATH_DESTINATION)/services/monstache/
 	@vortex --template $(PATH_TEMPLATE)/services/monstache --output $(PATH_DESTINATION)/services/monstache -varpath environments/services/$(ENV).yaml
-	@kubectl apply -f $(PATH_DESTINATION)/services/monstache/namespace.yaml --overwrite
+	# @kubectl apply -f $(PATH_DESTINATION)/services/monstache/namespace.yaml --overwrite
 	@rm -f $(PATH_DESTINATION)/services/monstache/namespace.yaml
 	@kubectl replace -f $(PATH_DESTINATION)/services/monstache/ --force --validate
 
 .linkerd:
 	@rm -rf $(PATH_DESTINATION)/services/linkerd/
 	@vortex --template $(PATH_TEMPLATE)/services/linkerd --output $(PATH_DESTINATION)/services/linkerd -varpath environments/services/$(ENV).yaml
-	@kubectl apply -f $(PATH_DESTINATION)/services/linkerd/namespace.yaml --overwrite
+	# @kubectl apply -f $(PATH_DESTINATION)/services/linkerd/namespace.yaml --overwrite
 	@rm -f $(PATH_DESTINATION)/services/linkerd/namespace.yaml
 	@kubectl replace -f $(PATH_DESTINATION)/services/linkerd/ --force --validate
 
 .istio:
 	rm -rf $(PATH_DESTINATION)/services/istio/
 	vortex --template $(PATH_TEMPLATE)/services/istio --output $(PATH_DESTINATION)/services/istio -varpath environments/services/$(ENV).yaml
-	kubectl apply -f $(PATH_DESTINATION)/services/istio/namespace.yaml --overwrite
+	# kubectl apply -f $(PATH_DESTINATION)/services/istio/namespace.yaml --overwrite
 	rm -f $(PATH_DESTINATION)/services/istio/namespace.yaml
 	kubectl replace -f $(PATH_DESTINATION)/services/istio/ --force --validate
 
@@ -176,6 +176,6 @@ create: .baseimage $(PATH_BEAMERY_FOLDER)
 	@openssl req -subj '/CN=*/' -x509 -batch -nodes -newkey rsa:2048 -keyout /tmp/lumberjack.key -out /tmp/lumberjack.crt
 	@-kubectl delete secret lumberjack-ssl --namespace=$(APP_ENV)
 	@-kubectl create ns $$(grep namespace $(PATH_DESTINATION)/apps/$(APP_NAME)/deployment.yaml | cut -d ' ' -f 4)
-	@-kubectl label namespace $$(grep namespace $(PATH_DESTINATION)/apps/$(APP_NAME)/deployment.yaml | cut -d ' ' -f 4) istio-injection=enabled --overwrite
+	# @-kubectl label namespace $$(grep namespace $(PATH_DESTINATION)/apps/$(APP_NAME)/deployment.yaml | cut -d ' ' -f 4) istio-injection=enabled --overwrite
 	@kubectl create secret tls lumberjack-ssl --cert=/tmp/lumberjack.crt --key=/tmp/lumberjack.key --namespace=$(APP_ENV)
 	@kubectl replace -f $(PATH_DESTINATION)/apps/$(APP_NAME)/ --force

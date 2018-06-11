@@ -1,13 +1,3 @@
-# apiVersion: networking.istio.io/v1alpha3
-# kind: DestinationRule
-# metadata:
-#   name: "kubernetes-master"
-#   namespace: "rabbitmq"
-# spec:
-#   host: "kubernetes.default.svc.cluster.local"
-#   trafficPolicy:
-#     tls:
-#       mode: DISABLE
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
@@ -25,70 +15,6 @@ spec:
     hosts:
     - api.beamery.local
     - beamery.local
----
-apiVersion: networking.istio.io/v1alpha3
-kind: Gateway
-metadata:
-  name: services
-  namespace: preview
-spec:
-  selector:
-    istio: pilot
-  servers:
-  - port:
-      number: 9200
-      name: es
-      protocol: HTTP
-    hosts:
-    - es
-  - port:
-      number: 9300
-      name: es
-      protocol: TCP
-    hosts:
-    - es
-  - port:
-      number: 15672
-      name: rabbitmq
-      protocol: HTTP
-    hosts:
-    - rabbitmq
-  - port:
-      number: 5672
-      name: rabbitmq
-      protocol: TCP
-    hosts:
-    - rabbitmq
-  - port:
-      number: 4369
-      name: rabbitmq
-      protocol: TCP
-    hosts:
-    - rabbitmq
-  - port:
-      number: 25672
-      name: rabbitmq
-      protocol: TCP
-    hosts:
-    - rabbitmq
-  - port:
-      number: 6379
-      name: redis
-      protocol: REDIS
-    hosts:
-    - redis
-  - port:
-      number: 16379
-      name: redis
-      protocol: REDIS
-    hosts:
-    - redis
-  - port:
-      number: 27017
-      name: mongodb
-      protocol: MONGO
-    hosts:
-    - mongodb
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
@@ -116,9 +42,15 @@ spec:
   gateways:
   - gateway-apps-api
   http:
-  - route:
+  - match:
+    - headers:
+        origin:
+          exact: "http://beamery.local"
+    route:
     - destination:
         host: api-core
+
+###########################################
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
@@ -127,26 +59,17 @@ metadata:
   namespace: preview
 spec:
   hosts:
-  - es
+  - elasticsearch.elasticsearch.svc.cluster.local
   gateways:
-  - services
+  - mesh
   http:
-  - match:
-    - port: 9200
-    route:
+  - route:
     - destination:
         host: elasticsearch.elasticsearch.svc.cluster.local
-        port:
-          number: 9200
   tcp:
-  - match:
-    - port: 9300
-      sourceSubnet: "172.17.16.0/24"
-    route:
+  - route:
     - destination:
         host: elasticsearch.elasticsearch.svc.cluster.local
-        port:
-          number: 9300
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
@@ -155,26 +78,13 @@ metadata:
   namespace: preview
 spec:
   hosts:
-  - redis
+  - redis-cluster.redis.svc.cluster.local
   gateways:
-  - services
+  - mesh
   tcp:
-  - match:
-    - port: 6379
-      sourceSubnet: "172.17.16.0/24"
-    route:
+  - route:
     - destination:
         host: redis-cluster.redis.svc.cluster.local
-        port:
-          number: 6379
-  - match:
-    - port: 16379
-      sourceSubnet: "172.17.16.0/24"
-    route:
-    - destination:
-        host: redis-cluster.redis.svc.cluster.local
-        port:
-          number: 16379
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
@@ -183,18 +93,13 @@ metadata:
   namespace: preview
 spec:
   hosts:
-  - mongodb
+  - mongodb.mongodb.svc.cluster.local
   gateways:
-  - services
+  - mesh
   tcp:
-  - match:
-    - port: 27017
-      sourceSubnet: "172.17.16.0/24"
-    route:
+  - route:
     - destination:
         host: mongodb.mongodb.svc.cluster.local
-        port:
-          number: 27017
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
@@ -203,39 +108,14 @@ metadata:
   namespace: preview
 spec:
   hosts:
-  - rabbitmq
+  - rabbitmq.rabbitmq.svc.cluster.local
   gateways:
-  - services
+  - mesh
   http:
-  - match:
-    - port: 15672
-    route:
+  - route:
     - destination:
         host: rabbitmq.rabbitmq.svc.cluster.local
-        port:
-          number: 15672
   tcp:
-  - match:
-    - port: 5672
-      sourceSubnet: "172.17.16.0/24"
-    route:
+  - route:
     - destination:
         host: rabbitmq.rabbitmq.svc.cluster.local
-        port:
-          number: 5672
-  - match:
-    - port: 4369
-      sourceSubnet: "172.17.16.0/24"
-    route:
-    - destination:
-        host: rabbitmq.rabbitmq.svc.cluster.local
-        port:
-          number: 4369
-  - match:
-    - port: 25672
-      sourceSubnet: "172.17.16.0/24"
-    route:
-    - destination:
-        host: rabbitmq.rabbitmq.svc.cluster.local
-        port:
-          number: 25672

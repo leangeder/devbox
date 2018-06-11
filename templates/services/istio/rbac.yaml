@@ -1,9 +1,1002 @@
+# ---
+# kind: ClusterRole
+# apiVersion: rbac.authorization.k8s.io/v1beta1
+# metadata:
+#   name: istio-pilot
+#   namespace: {{.istio.namespace}}
+# rules:
+# - apiGroups: ["config.istio.io"]
+#   resources: ["*"]
+#   verbs: ["*"]
+# - apiGroups: ["networking.istio.io"]
+#   resources: ["*"]
+#   verbs: ["*"]
+# - apiGroups: ["authentication.istio.io"]
+#   resources: ["*"]
+#   verbs: ["*"]
+# - apiGroups: ["apiextensions.k8s.io"]
+#   resources: ["customresourcedefinitions"]
+#   verbs: ["*"]
+# - apiGroups: ["extensions"]
+#   resources: ["thirdpartyresources", "thirdpartyresources.extensions", "ingresses", "ingresses/status"]
+#   verbs: ["*"]
+# - apiGroups: [""]
+#   resources: ["configmaps"]
+#   verbs: ["create", "get", "list", "watch", "update"]
+# - apiGroups: [""]
+#   resources: ["endpoints", "pods", "services"]
+#   verbs: ["get", "list", "watch"]
+# - apiGroups: [""]
+#   resources: ["namespaces", "nodes", "secrets"]
+#   verbs: ["get", "list", "watch"]
+# ---
+# kind: ClusterRole
+# apiVersion: rbac.authorization.k8s.io/v1beta1
+# metadata:
+#   name: istio-ingress
+#   namespace: {{.istio.namespace}}
+# rules:
+# - apiGroups: ["extensions"]
+#   resources: ["thirdpartyresources", "ingresses"]
+#   verbs: ["get", "watch", "list", "update"]
+# - apiGroups: [""]
+#   resources: ["configmaps", "pods", "endpoints", "services"]
+#   verbs: ["get", "watch", "list"]
+# ---
+# kind: ClusterRole
+# apiVersion: rbac.authorization.k8s.io/v1beta1
+# metadata:
+#   name: istio-mixer
+#   namespace: {{.istio.namespace}}
+# rules:
+# - apiGroups: ["config.istio.io"] # istio CRD watcher
+#   resources: ["*"]
+#   verbs: ["create", "get", "list", "watch", "patch"]
+# - apiGroups: ["networking.istio.io"] # needed to create mixer destination rules
+#   resources: ["*"]
+#   verbs: ["*"]
+# - apiGroups: ["apiextensions.k8s.io"]
+#   resources: ["customresourcedefinitions"]
+#   verbs: ["get", "list", "watch"]
+# - apiGroups: [""]
+#   resources: ["configmaps", "endpoints", "pods", "services", "namespaces", "secrets"]
+#   verbs: ["get", "list", "watch"]
+# ---
+# kind: ClusterRole
+# apiVersion: rbac.authorization.k8s.io/v1beta1
+# metadata:
+#   name: istio-sidecar-injector
+#   namespace: {{.istio.namespace}}
+# rules:
+# - apiGroups: ["*"]
+#   resources: ["configmaps"]
+#   verbs: ["get", "list", "watch"]
+# - apiGroups: ["admissionregistration.k8s.io"]
+#   resources: ["mutatingwebhookconfigurations"]
+#   verbs: ["get", "list", "watch", "patch"]
+# ---
+# kind: ClusterRoleBinding
+# apiVersion: rbac.authorization.k8s.io/v1beta1
+# metadata:
+#   name: istio-pilot
+# roleRef:
+#   kind: ClusterRole
+#   apiGroup: rbac.authorization.k8s.io
+#   name: istio-pilot
+# subjects:
+#   - kind: ServiceAccount
+#     name: istio-pilot
+#     namespace: {{.istio.namespace}}
+# ---
+# kind: ClusterRoleBinding
+# apiVersion: rbac.authorization.k8s.io/v1beta1
+# metadata:
+#   name: istio-ingress
+# roleRef:
+#   kind: ClusterRole
+#   apiGroup: rbac.authorization.k8s.io
+#   name: istio-ingress
+# subjects:
+#   - kind: ServiceAccount
+#     name: istio-ingress
+#     namespace: {{.istio.namespace}}
+# ---
+# kind: ClusterRoleBinding
+# apiVersion: rbac.authorization.k8s.io/v1beta1
+# metadata:
+#   name: istio-sidecar-injector
+# roleRef:
+#   kind: ClusterRole
+#   apiGroup: rbac.authorization.k8s.io
+#   name: istio-sidecar-injector
+# subjects:
+#   - kind: ServiceAccount
+#     name: istio-sidecar-injector
+#     namespace: {{.istio.namespace}}
+# ---
+# kind: ClusterRoleBinding
+# apiVersion: rbac.authorization.k8s.io/v1beta1
+# metadata:
+#   name: istio-mixer
+# roleRef:
+#   kind: ClusterRole
+#   apiGroup: rbac.authorization.k8s.io
+#   name: istio-mixer
+# subjects:
+#   - kind: ServiceAccount
+#     name: istio-mixer
+#     namespace: {{.istio.namespace}}
+# # ---
+# # kind: ClusterRole
+# # apiVersion: rbac.authorization.k8s.io/v1beta1
+# # metadata:
+# #   name: istio-pilot
+# #   namespace: {{.istio.namespace}}
+# # rules:
+# #   - apiGroups: [""]
+# #     resources: ["configmaps", "endpoints", "pods", "services"]
+# #     verbs: ["*"]
+# #   - apiGroups: ["extensions"]
+# #     resources: ["thirdpartyresources", "thirdpartyresources.extensions", "ingresses"]
+# #     verbs: ["*"]
+# #   - apiGroups: ["istio.io"]
+# #     resources: ["istioconfigs", "istioconfigs.istio.io"]
+# #     verbs: ["*"]
+# # ---
+# # kind: ClusterRole
+# # apiVersion: rbac.authorization.k8s.io/v1beta1
+# # metadata:
+# #   name: istio-ingress
+# #   namespace: {{.istio.namespace}}
+# # rules:
+# #   - apiGroups: [""]
+# #     resources: ["configmaps", "endpoints", "pods", "services"]
+# #     verbs: ["*"]
+# #   - apiGroups: ["extensions"]
+# #     resources: ["thirdpartyresources", "thirdpartyresources.extensions", "ingresses"]
+# #     verbs: ["*"]
+# #   - apiGroups: ["istio.io"]
+# #     resources: ["istioconfigs", "istioconfigs.istio.io"]
+# #     verbs: ["*"]
+# # ---
+# # kind: ClusterRoleBinding
+# # apiVersion: rbac.authorization.k8s.io/v1beta1
+# # metadata:
+# #   name: istio-pilot
+# #   namespace: {{.istio.namespace}}
+# # subjects:
+# #   - kind: ServiceAccount
+# #     name: istio-pilot
+# #     namespace: {{.istio.namespace}}
+# # roleRef:
+# #   kind: ClusterRole
+# #   name: istio-pilot
+# #   apiGroup: rbac.authorization.k8s.io
+# # ---
+# # kind: ClusterRoleBinding
+# # apiVersion: rbac.authorization.k8s.io/v1beta1
+# # metadata:
+# #   name: istio-ingress
+# #   namespace: {{.istio.namespace}}
+# # subjects:
+# #   - kind: ServiceAccount
+# #     name: istio-ingress
+# #     namespace: {{.istio.namespace}}
+# # roleRef:
+# #   kind: ClusterRole
+# #   name: istio-ingress
+# #   apiGroup: rbac.authorization.k8s.io
+
+
+
+
+
+
+
+
+
+
+
 ---
-kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
 metadata:
-  name: istio-pilot
-  namespace: {{.istio.namespace}}
+  name: istio-mixer-post-install-istio-system
+  namespace: istio-system
+  labels:
+    app: mixer
+    chart: mixer-0.8.0
+    heritage: Tiller
+    release: RELEASE-NAME
+rules:
+- apiGroups: ["config.istio.io"] # istio CRD watcher
+  resources: ["*"]
+  verbs: ["create", "get", "list", "watch", "patch"]
+- apiGroups: ["networking.istio.io"] # needed to create mixer destination rules
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["configmaps", "endpoints", "pods", "services", "namespaces", "secrets"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: istio-mixer-post-install-role-binding-istio-system
+  labels:
+    app: mixer
+    chart: mixer-0.8.0
+    heritage: Tiller
+    release: RELEASE-NAME
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: istio-mixer-post-install-istio-system
+subjects:
+  - kind: ServiceAccount
+    name: istio-mixer-post-install-account
+    namespace: istio-system
+---
+# Source: istio/charts/mixer/templates/crds.yaml
+# Mixer CRDs
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: rules.config.istio.io
+  labels:
+    app: mixer
+    package: istio.io.mixer
+    istio: core
+spec:
+  group: config.istio.io
+  names:
+    kind: rule
+    plural: rules
+    singular: rule
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: attributemanifests.config.istio.io
+  labels:
+    app: mixer
+    package: istio.io.mixer
+    istio: core
+spec:
+  group: config.istio.io
+  names:
+    kind: attributemanifest
+    plural: attributemanifests
+    singular: attributemanifest
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: circonuses.config.istio.io
+  labels:
+    app: mixer
+    package: circonus
+    istio: mixer-adapter
+spec:
+  group: config.istio.io
+  names:
+    kind: circonus
+    plural: circonuses
+    singular: circonus
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: deniers.config.istio.io
+  labels:
+    app: mixer
+    package: denier
+    istio: mixer-adapter
+spec:
+  group: config.istio.io
+  names:
+    kind: denier
+    plural: deniers
+    singular: denier
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: fluentds.config.istio.io
+  labels:
+    app: mixer
+    package: fluentd
+    istio: mixer-adapter
+spec:
+  group: config.istio.io
+  names:
+    kind: fluentd
+    plural: fluentds
+    singular: fluentd
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: kubernetesenvs.config.istio.io
+  labels:
+    app: mixer
+    package: kubernetesenv
+    istio: mixer-adapter
+spec:
+  group: config.istio.io
+  names:
+    kind: kubernetesenv
+    plural: kubernetesenvs
+    singular: kubernetesenv
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: listcheckers.config.istio.io
+  labels:
+    app: mixer
+    package: listchecker
+    istio: mixer-adapter
+spec:
+  group: config.istio.io
+  names:
+    kind: listchecker
+    plural: listcheckers
+    singular: listchecker
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: memquotas.config.istio.io
+  labels:
+    app: mixer
+    package: memquota
+    istio: mixer-adapter
+spec:
+  group: config.istio.io
+  names:
+    kind: memquota
+    plural: memquotas
+    singular: memquota
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: noops.config.istio.io
+  labels:
+    app: mixer
+    package: noop
+    istio: mixer-adapter
+spec:
+  group: config.istio.io
+  names:
+    kind: noop
+    plural: noops
+    singular: noop
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: opas.config.istio.io
+  labels:
+    app: mixer
+    package: opa
+    istio: mixer-adapter
+spec:
+  group: config.istio.io
+  names:
+    kind: opa
+    plural: opas
+    singular: opa
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: prometheuses.config.istio.io
+  labels:
+    app: mixer
+    package: prometheus
+    istio: mixer-adapter
+spec:
+  group: config.istio.io
+  names:
+    kind: prometheus
+    plural: prometheuses
+    singular: prometheus
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: rbacs.config.istio.io
+  labels:
+    app: mixer
+    package: rbac
+    istio: mixer-adapter
+spec:
+  group: config.istio.io
+  names:
+    kind: rbac
+    plural: rbacs
+    singular: rbac
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: servicecontrols.config.istio.io
+  labels:
+    app: mixer
+    package: servicecontrol
+    istio: mixer-adapter
+spec:
+  group: config.istio.io
+  names:
+    kind: servicecontrol
+    plural: servicecontrols
+    singular: servicecontrol
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: solarwindses.config.istio.io
+  labels:
+    app: mixer
+    package: solarwinds
+    istio: mixer-adapter
+spec:
+  group: config.istio.io
+  names:
+    kind: solarwinds
+    plural: solarwindses
+    singular: solarwinds
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: stackdrivers.config.istio.io
+  labels:
+    app: mixer
+    package: stackdriver
+    istio: mixer-adapter
+spec:
+  group: config.istio.io
+  names:
+    kind: stackdriver
+    plural: stackdrivers
+    singular: stackdriver
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: statsds.config.istio.io
+  labels:
+    app: mixer
+    package: statsd
+    istio: mixer-adapter
+spec:
+  group: config.istio.io
+  names:
+    kind: statsd
+    plural: statsds
+    singular: statsd
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: stdios.config.istio.io
+  labels:
+    app: mixer
+    package: stdio
+    istio: mixer-adapter
+spec:
+  group: config.istio.io
+  names:
+    kind: stdio
+    plural: stdios
+    singular: stdio
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: apikeys.config.istio.io
+  labels:
+    app: mixer
+    package: apikey
+    istio: mixer-instance
+spec:
+  group: config.istio.io
+  names:
+    kind: apikey
+    plural: apikeys
+    singular: apikey
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: authorizations.config.istio.io
+  labels:
+    app: mixer
+    package: authorization
+    istio: mixer-instance
+spec:
+  group: config.istio.io
+  names:
+    kind: authorization
+    plural: authorizations
+    singular: authorization
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: checknothings.config.istio.io
+  labels:
+    app: mixer
+    package: checknothing
+    istio: mixer-instance
+spec:
+  group: config.istio.io
+  names:
+    kind: checknothing
+    plural: checknothings
+    singular: checknothing
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: kuberneteses.config.istio.io
+  labels:
+    app: mixer
+    package: adapter.template.kubernetes
+    istio: mixer-instance
+spec:
+  group: config.istio.io
+  names:
+    kind: kubernetes
+    plural: kuberneteses
+    singular: kubernetes
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: listentries.config.istio.io
+  labels:
+    app: mixer
+    package: listentry
+    istio: mixer-instance
+spec:
+  group: config.istio.io
+  names:
+    kind: listentry
+    plural: listentries
+    singular: listentry
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: logentries.config.istio.io
+  labels:
+    app: mixer
+    package: logentry
+    istio: mixer-instance
+spec:
+  group: config.istio.io
+  names:
+    kind: logentry
+    plural: logentries
+    singular: logentry
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: metrics.config.istio.io
+  labels:
+    app: mixer
+    package: metric
+    istio: mixer-instance
+spec:
+  group: config.istio.io
+  names:
+    kind: metric
+    plural: metrics
+    singular: metric
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: quotas.config.istio.io
+  labels:
+    app: mixer
+    package: quota
+    istio: mixer-instance
+spec:
+  group: config.istio.io
+  names:
+    kind: quota
+    plural: quotas
+    singular: quota
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: reportnothings.config.istio.io
+  labels:
+    app: mixer
+    package: reportnothing
+    istio: mixer-instance
+spec:
+  group: config.istio.io
+  names:
+    kind: reportnothing
+    plural: reportnothings
+    singular: reportnothing
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: servicecontrolreports.config.istio.io
+  labels:
+    app: mixer
+    package: servicecontrolreport
+    istio: mixer-instance
+spec:
+  group: config.istio.io
+  names:
+    kind: servicecontrolreport
+    plural: servicecontrolreports
+    singular: servicecontrolreport
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: tracespans.config.istio.io
+  labels:
+    app: mixer
+    package: tracespan
+    istio: mixer-instance
+spec:
+  group: config.istio.io
+  names:
+    kind: tracespan
+    plural: tracespans
+    singular: tracespan
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: serviceroles.config.istio.io
+  labels:
+    app: mixer
+    package: istio.io.mixer
+    istio: rbac
+spec:
+  group: config.istio.io
+  names:
+    kind: ServiceRole
+    plural: serviceroles
+    singular: servicerole
+  scope: Namespaced
+  version: v1alpha2
+---
+
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: servicerolebindings.config.istio.io
+  labels:
+    app: mixer
+    package: istio.io.mixer
+    istio: rbac
+spec:
+  group: config.istio.io
+  names:
+    kind: ServiceRoleBinding
+    plural: servicerolebindings
+    singular: servicerolebinding
+  scope: Namespaced
+  version: v1alpha2
+
+---
+# Source: istio/charts/pilot/templates/crds.yaml
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: destinationpolicies.config.istio.io
+  labels:
+    app: istio-pilot
+spec:
+  group: config.istio.io
+  names:
+    kind: DestinationPolicy
+    listKind: DestinationPolicyList
+    plural: destinationpolicies
+    singular: destinationpolicy
+  scope: Namespaced
+  version: v1alpha2
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: egressrules.config.istio.io
+  labels:
+    app: istio-pilot
+spec:
+  group: config.istio.io
+  names:
+    kind: EgressRule
+    listKind: EgressRuleList
+    plural: egressrules
+    singular: egressrule
+  scope: Namespaced
+  version: v1alpha2
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: routerules.config.istio.io
+  labels:
+    app: istio-pilot
+spec:
+  group: config.istio.io
+  names:
+    kind: RouteRule
+    listKind: RouteRuleList
+    plural: routerules
+    singular: routerule
+  scope: Namespaced
+  version: v1alpha2
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: virtualservices.networking.istio.io
+  labels:
+    app: istio-pilot
+spec:
+  group: networking.istio.io
+  names:
+    kind: VirtualService
+    listKind: VirtualServiceList
+    plural: virtualservices
+    singular: virtualservice
+  scope: Namespaced
+  version: v1alpha3
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: destinationrules.networking.istio.io
+  labels:
+    app: istio-pilot
+spec:
+  group: networking.istio.io
+  names:
+    kind: DestinationRule
+    listKind: DestinationRuleList
+    plural: destinationrules
+    singular: destinationrule
+  scope: Namespaced
+  version: v1alpha3
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: serviceentries.networking.istio.io
+  labels:
+    app: istio-pilot
+spec:
+  group: networking.istio.io
+  names:
+    kind: ServiceEntry
+    listKind: ServiceEntryList
+    plural: serviceentries
+    singular: serviceentry
+  scope: Namespaced
+  version: v1alpha3
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: gateways.networking.istio.io
+  labels:
+    app: istio-pilot
+spec:
+  group: networking.istio.io
+  names:
+    kind: Gateway
+    plural: gateways
+    singular: gateway
+  scope: Namespaced
+  version: v1alpha3
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: policies.authentication.istio.io
+spec:
+  group: authentication.istio.io
+  names:
+    kind: Policy
+    plural: policies
+    singular: policy
+  scope: Namespaced
+  version: v1alpha1
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: httpapispecbindings.config.istio.io
+spec:
+  group: config.istio.io
+  names:
+    kind: HTTPAPISpecBinding
+    plural: httpapispecbindings
+    singular: httpapispecbinding
+  scope: Namespaced
+  version: v1alpha2
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: httpapispecs.config.istio.io
+spec:
+  group: config.istio.io
+  names:
+    kind: HTTPAPISpec
+    plural: httpapispecs
+    singular: httpapispec
+  scope: Namespaced
+  version: v1alpha2
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: quotaspecbindings.config.istio.io
+spec:
+  group: config.istio.io
+  names:
+    kind: QuotaSpecBinding
+    plural: quotaspecbindings
+    singular: quotaspecbinding
+  scope: Namespaced
+  version: v1alpha2
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: quotaspecs.config.istio.io
+spec:
+  group: config.istio.io
+  names:
+    kind: QuotaSpec
+    plural: quotaspecs
+    singular: quotaspec
+  scope: Namespaced
+  version: v1alpha2
+
+
+---
+# Source: istio/charts/mixer/templates/clusterrole.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: istio-mixer-istio-system
+  namespace: istio-system
+  labels:
+    app: mixer
+    chart: mixer-0.8.0
+    heritage: Tiller
+    release: RELEASE-NAME
+rules:
+- apiGroups: ["config.istio.io"] # istio CRD watcher
+  resources: ["*"]
+  verbs: ["create", "get", "list", "watch", "patch"]
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["configmaps", "endpoints", "pods", "services", "namespaces", "secrets"]
+  verbs: ["get", "list", "watch"]
+
+---
+# Source: istio/charts/pilot/templates/clusterrole.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: istio-pilot-istio-system
+  namespace: istio-system
+  labels:
+    app: istio-pilot
+    chart: pilot-0.8.0
+    heritage: Tiller
+    release: RELEASE-NAME
 rules:
 - apiGroups: ["config.istio.io"]
   resources: ["*"]
@@ -29,44 +1022,102 @@ rules:
 - apiGroups: [""]
   resources: ["namespaces", "nodes", "secrets"]
   verbs: ["get", "list", "watch"]
+
 ---
-kind: ClusterRole
+# Source: istio/charts/prometheus/templates/clusterrole.yaml
+
+---
 apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
 metadata:
-  name: istio-ingress
-  namespace: {{.istio.namespace}}
+  name: prometheus-istio-system
+  namespace: istio-system
 rules:
-- apiGroups: ["extensions"]
-  resources: ["thirdpartyresources", "ingresses"]
-  verbs: ["get", "watch", "list", "update"]
 - apiGroups: [""]
-  resources: ["configmaps", "pods", "endpoints", "services"]
+  resources:
+  - nodes
+  - services
+  - endpoints
+  - pods
+  - nodes/proxy
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources:
+  - configmaps
+  verbs: ["get"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus-istio-system
+  namespace: istio-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus-istio-system
+subjects:
+- kind: ServiceAccount
+  name: prometheus
+  namespace: istio-system
+---
+
+
+---
+# Source: istio/charts/security/templates/clusterrole.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: istio-citadel-istio-system
+  namespace: istio-system
+  labels:
+    app: security
+    chart: security-0.8.0
+    heritage: Tiller
+    release: RELEASE-NAME
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["create", "get", "watch", "list", "update", "delete"]
+- apiGroups: [""]
+  resources: ["serviceaccounts"]
+  verbs: ["get", "watch", "list"]
+- apiGroups: [""]
+  resources: ["services"]
   verbs: ["get", "watch", "list"]
 ---
-kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
 metadata:
-  name: istio-mixer
-  namespace: {{.istio.namespace}}
+  name: istio-cleanup-old-ca-istio-system
+  namespace: istio-system
+  labels:
+    app: security
+    chart: security-0.8.0
+    heritage: Tiller
+    release: RELEASE-NAME
 rules:
-- apiGroups: ["config.istio.io"] # istio CRD watcher
-  resources: ["*"]
-  verbs: ["create", "get", "list", "watch", "patch"]
-- apiGroups: ["networking.istio.io"] # needed to create mixer destination rules
-  resources: ["*"]
-  verbs: ["*"]
-- apiGroups: ["apiextensions.k8s.io"]
-  resources: ["customresourcedefinitions"]
-  verbs: ["get", "list", "watch"]
 - apiGroups: [""]
-  resources: ["configmaps", "endpoints", "pods", "services", "namespaces", "secrets"]
-  verbs: ["get", "list", "watch"]
+  resources: ["deployments", "serviceaccounts", "services"]
+  verbs: ["get", "delete"]
+- apiGroups: ["extensions"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "update", "delete"]
+
 ---
-kind: ClusterRole
+# Source: istio/charts/sidecarInjectorWebhook/templates/clusterrole.yaml
+
 apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
 metadata:
-  name: istio-sidecar-injector
-  namespace: {{.istio.namespace}}
+  name: istio-sidecar-injector-istio-system
+  labels:
+    app: istio-sidecar-injector
+    chart: sidecarInjectorWebhook-0.8.0
+    heritage: Tiller
+    release: RELEASE-NAME
 rules:
 - apiGroups: ["*"]
   resources: ["configmaps"]
@@ -74,115 +1125,158 @@ rules:
 - apiGroups: ["admissionregistration.k8s.io"]
   resources: ["mutatingwebhookconfigurations"]
   verbs: ["get", "list", "watch", "patch"]
+
 ---
-kind: ClusterRoleBinding
+# Source: istio/charts/mixer/templates/clusterrolebinding.yaml
+
 apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
 metadata:
-  name: istio-pilot
+  name: istio-mixer-admin-role-binding-istio-system
+  labels:
+    app: mixer
+    chart: mixer-0.8.0
+    heritage: Tiller
+    release: RELEASE-NAME
 roleRef:
-  kind: ClusterRole
   apiGroup: rbac.authorization.k8s.io
-  name: istio-pilot
+  kind: ClusterRole
+  name: istio-mixer-istio-system
 subjects:
   - kind: ServiceAccount
-    name: istio-pilot
-    namespace: {{.istio.namespace}}
+    name: istio-mixer-service-account
+    namespace: istio-system
+
 ---
-kind: ClusterRoleBinding
+# Source: istio/charts/pilot/templates/clusterrolebinding.yaml
+
 apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
 metadata:
-  name: istio-ingress
+  name: istio-pilot-istio-system
+  labels:
+    app: istio-pilot
+    chart: pilot-0.8.0
+    heritage: Tiller
+    release: RELEASE-NAME
 roleRef:
-  kind: ClusterRole
   apiGroup: rbac.authorization.k8s.io
-  name: istio-ingress
+  kind: ClusterRole
+  name: istio-pilot-istio-system
 subjects:
   - kind: ServiceAccount
-    name: istio-ingress
-    namespace: {{.istio.namespace}}
+    name: istio-pilot-service-account
+    namespace: istio-system
+
 ---
-kind: ClusterRoleBinding
+# Source: istio/charts/security/templates/clusterrolebinding.yaml
+
 apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: istio-citadel-istio-system
+  labels:
+    app: security
+    chart: security-0.8.0
+    heritage: Tiller
+    release: RELEASE-NAME
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: istio-citadel-istio-system
+subjects:
+  - kind: ServiceAccount
+    name: istio-citadel-service-account
+    namespace: istio-system
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: istio-cleanup-old-ca-istio-system
+  namespace: istio-system
+  labels:
+    app: security
+    chart: security-0.8.0
+    heritage: Tiller
+    release: RELEASE-NAME
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: istio-cleanup-old-ca-istio-system
+subjects:
+  - kind: ServiceAccount
+    name: istio-cleanup-old-ca-service-account
+    namespace: istio-system
+
+---
+# Source: istio/charts/sidecarInjectorWebhook/templates/clusterrolebinding.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: istio-sidecar-injector-admin-role-binding-istio-system
+  labels:
+    app: istio-sidecar-injector
+    chart: sidecarInjectorWebhook-0.8.0
+    heritage: Tiller
+    release: RELEASE-NAME
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: istio-sidecar-injector-istio-system
+subjects:
+  - kind: ServiceAccount
+    name: istio-sidecar-injector-service-account
+    namespace: istio-system
+
+---
+# Source: istio/charts/sidecarInjectorWebhook/templates/mutatingwebhook.yaml
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
 metadata:
   name: istio-sidecar-injector
-roleRef:
-  kind: ClusterRole
-  apiGroup: rbac.authorization.k8s.io
-  name: istio-sidecar-injector
-subjects:
-  - kind: ServiceAccount
-    name: istio-sidecar-injector
-    namespace: {{.istio.namespace}}
+  namespace: istio-system
+  labels:
+    app: istio-sidecar-injector
+    chart: sidecarInjectorWebhook-0.8.0
+    release: RELEASE-NAME
+    heritage: Tiller
+webhooks:
+  - name: sidecar-injector.istio.io
+    clientConfig:
+      service:
+        name: istio-sidecar-injector
+        namespace: istio-system
+        path: "/inject"
+      caBundle: ""
+    rules:
+      - operations: [ "CREATE" ]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
+    failurePolicy: Fail
+    namespaceSelector:
+      matchLabels:
+        istio-injection: enabled
+
 ---
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
-metadata:
-  name: istio-mixer
-roleRef:
-  kind: ClusterRole
-  apiGroup: rbac.authorization.k8s.io
-  name: istio-mixer
-subjects:
-  - kind: ServiceAccount
-    name: istio-mixer
-    namespace: {{.istio.namespace}}
-# ---
-# kind: ClusterRole
-# apiVersion: rbac.authorization.k8s.io/v1beta1
-# metadata:
-#   name: istio-pilot
-#   namespace: {{.istio.namespace}}
-# rules:
-#   - apiGroups: [""]
-#     resources: ["configmaps", "endpoints", "pods", "services"]
-#     verbs: ["*"]
-#   - apiGroups: ["extensions"]
-#     resources: ["thirdpartyresources", "thirdpartyresources.extensions", "ingresses"]
-#     verbs: ["*"]
-#   - apiGroups: ["istio.io"]
-#     resources: ["istioconfigs", "istioconfigs.istio.io"]
-#     verbs: ["*"]
-# ---
-# kind: ClusterRole
-# apiVersion: rbac.authorization.k8s.io/v1beta1
-# metadata:
-#   name: istio-ingress
-#   namespace: {{.istio.namespace}}
-# rules:
-#   - apiGroups: [""]
-#     resources: ["configmaps", "endpoints", "pods", "services"]
-#     verbs: ["*"]
-#   - apiGroups: ["extensions"]
-#     resources: ["thirdpartyresources", "thirdpartyresources.extensions", "ingresses"]
-#     verbs: ["*"]
-#   - apiGroups: ["istio.io"]
-#     resources: ["istioconfigs", "istioconfigs.istio.io"]
-#     verbs: ["*"]
-# ---
-# kind: ClusterRoleBinding
-# apiVersion: rbac.authorization.k8s.io/v1beta1
-# metadata:
-#   name: istio-pilot
-#   namespace: {{.istio.namespace}}
-# subjects:
-#   - kind: ServiceAccount
-#     name: istio-pilot
-#     namespace: {{.istio.namespace}}
-# roleRef:
-#   kind: ClusterRole
-#   name: istio-pilot
-#   apiGroup: rbac.authorization.k8s.io
-# ---
-# kind: ClusterRoleBinding
-# apiVersion: rbac.authorization.k8s.io/v1beta1
-# metadata:
-#   name: istio-ingress
-#   namespace: {{.istio.namespace}}
-# subjects:
-#   - kind: ServiceAccount
-#     name: istio-ingress
-#     namespace: {{.istio.namespace}}
-# roleRef:
-#   kind: ClusterRole
-#   name: istio-ingress
-#   apiGroup: rbac.authorization.k8s.io
+# Source: istio/charts/grafana/templates/ingress.yaml
+
+---
+# Source: istio/charts/mixer/templates/config.yaml
+
+
+---
+# Source: istio/charts/prometheus/templates/ingress.yaml
+
+---
+# Source: istio/charts/servicegraph/templates/ingress.yaml
+
+---
+# Source: istio/charts/tracing/templates/ingress.yaml
+
+---
+# Source: istio/charts/tracing/templates/service-jaeger.yaml
+
+
+

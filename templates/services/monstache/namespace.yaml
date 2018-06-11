@@ -1,4 +1,4 @@
-  kind: Namespace
-  apiVersion: v1
-  metadata:
-    name: {{.monstache.namespace}}
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: {{.monstache.namespace}}
