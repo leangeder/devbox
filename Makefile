@@ -88,8 +88,8 @@ endif
 endif
 
 .baseimage: up $(PATH_ROOT_DOCKER_FOLDER)
-	eval $$(minikube docker-env); cd $(PATH_ROOT_DOCKER_FOLDER); docker build -t $(CONTAINER)-preview/devops-node:latest -f node.Dockerfile .
-	eval $$(minikube docker-env); cd $(PATH_ROOT_DOCKER_FOLDER); docker build -t $(CONTAINER)-preview/devops-nginx:latest -f nginx.Dockerfile .
+	# eval $$(minikube docker-env); cd $(PATH_ROOT_DOCKER_FOLDER); docker build -t $(CONTAINER)-preview/devops-node:latest -f node.Dockerfile .
+	# eval $$(minikube docker-env); cd $(PATH_ROOT_DOCKER_FOLDER); docker build -t $(CONTAINER)-preview/devops-nginx:latest -f nginx.Dockerfile .
 
 $(PATH_ROOT_DOCKER_FOLDER):
 	git clone git@github.com:SeedJobs/devops-docker-images.git $(PATH_ROOT_DOCKER_FOLDER)
@@ -102,12 +102,12 @@ $(PATH_BEAMERY_FOLDER):
 	git clone git@github.com:SeedJobs/devops-kubernetes-beamery.git $(PATH_BEAMERY_FOLDER)
 
 up: /usr/local/bin/kubectl /usr/local/bin/go /usr/local/bin/vortex /usr/local/bin/meta-git /usr/local/bin/minikube $(PATH_BEAMERY_FOLDER)
-ifeq (0,$(shell minikube status | grep Running | wc -l))
-	minikube config set WantReportErrorPrompt false
-	minikube start --memory=6144 --extra-config=apiserver.authorization-mode=RBAC --extra-config=controller-manager.cluster-signing-cert-file="/var/lib/localkube/certs/ca.crt" --extra-config=controller-manager.cluster-signing-key-file="/var/lib/localkube/certs/ca.key" --extra-config=apiserver.admission-control="NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
-	-minikube addons disable ingress
-	-minikube addons disable heapster
-endif
+# ifeq (0,$(shell minikube status | grep Running | wc -l))
+# 	minikube config set WantReportErrorPrompt false
+# 	minikube start --memory=6144 --extra-config=apiserver.authorization-mode=RBAC --extra-config=controller-manager.cluster-signing-cert-file="/var/lib/localkube/certs/ca.crt" --extra-config=controller-manager.cluster-signing-key-file="/var/lib/localkube/certs/ca.key" --extra-config=apiserver.admission-control="NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
+# 	-minikube addons disable ingress
+# 	-minikube addons disable heapster
+# endif
 
 delete:
 	kubectl delete -R -f $(PATH_PROJECT)/$(PATH_DESTINATION/ --force
@@ -131,7 +131,11 @@ $(SERVICE_NAME): $(PATH_PROJECT)/environments/services/$(SERVICE_NAME) $(PATH_PR
 	vortex --template $(PATH_PROJECT)/$(PATH_TEMPLATE)/services/$@/ --output $(PATH_DESTINATION)/services/$@/ -varpath $(PATH_PROJECT)/environments/services/$@/$(SERVICE_ENV).yaml
 	-kubectl apply -f $(PATH_PROJECT)/$(PATH_DESTINATION)/services/$@/namespace.yaml --overwrite
 	rm -f $(PATH_PROJECT)/$(PATH_DESTINATION)/services/$@/namespace.yaml
+	find $(PATH_PROJECT)/$(PATH_DESTINATION)/services/$@/ -type f -name *.rule.yaml -exec mv {} {}.rule \;
 	kubectl replace -f $(PATH_PROJECT)/$(PATH_DESTINATION)/services/$@/ --force --validate
+ifneq (,$(wildcard $(PATH_PROJECT)/$(PATH_DESTINATION)/services/$@/*.rule.yaml))
+	kubectl replace -f $(PATH_PROJECT)/$(PATH_DESTINATION)/services/$@/*.rule --force --validate
+endif
 endif
 endif
 
@@ -164,10 +168,12 @@ service: $(SERVICE_NAME) $(SERVICE_ENV);
 
 $(APP_NAME):
 ifeq (update,$(firstword $(MAKECMDGOALS)))
-	eval $$(minikube docker-env); cd $(PATH_BEAMERY_META)/$@; docker build -t $@:$(TIMESTAMP) -f Dockerfile .;
+	# eval $$(minikube docker-env); cd $(PATH_BEAMERY_META)/$@; docker build -t $@:$(TIMESTAMP) -f Dockerfile .;
+	cd $(PATH_BEAMERY_META)/$@; docker build -t $@:$(TIMESTAMP) -f Dockerfile .; gcloud docker -- push $(CONTAINER)-$(APP_ENV)/$@:v-master-bleedingedge
 	kubectl set image -f $(PATH_BEAMERY_FOLDER)/$(PATH_DESTINATION)/$@/deployment.yaml $@=$@:$(TIMESTAMP)
 else
-	eval $$(minikube docker-env); cd $(PATH_BEAMERY_META)/$@; docker build -t $(CONTAINER)-$(APP_ENV)/$@:v-master-bleedingedge -f Dockerfile .;
+	# eval $$(minikube docker-env); cd $(PATH_BEAMERY_META)/$@; docker build -t $(CONTAINER)-$(APP_ENV)/$@:v-master-bleedingedge -f Dockerfile .;
+	cd $(PATH_BEAMERY_META)/$@; docker build -t $(CONTAINER)-$(APP_ENV)/$@:v-master-bleedingedge -f Dockerfile .; gcloud docker -- push $(CONTAINER)-$(APP_ENV)/$@:v-master-bleedingedge
 	mkdir -p $(PATH_PROJECT)/environments/apps/$@
 	ln -sf $(PATH_BEAMERY_FOLDER)/environments/$(APP_ENV).yaml $(PATH_PROJECT)/environments/apps/$@/$(APP_ENV).yaml
 	mkdir -p $(PATH_PROJECT)/$(PATH_TEMPLATE)/apps/
