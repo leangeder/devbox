@@ -1,0 +1,14 @@
+{{.templatepreamble}}
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-portal-as
+  namespace: {{.namespace}}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1beta1
+    kind: Deployment
+    name: api-portal
+  minReplicas: {{.apiportal.minreplicas}}
+  maxReplicas: {{.apiportal.maxreplicas}}
+  targetCPUUtilizationPercentage: 100

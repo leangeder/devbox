@@ -1,0 +1,51 @@
+{{.templatepreamble}}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: app-widget
+  namespace: {{.namespace}}
+spec:
+  revisionHistoryLimit: 5
+  replicas: {{.appwidget.minreplicas}}
+  minReadySeconds: 20
+  progressDeadlineSeconds: {{.appwidget.rolloutdeadlinetime}}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: app-widget
+        type: {{.appwidget.type}}
+        environment: {{.appwidget.environment}}
+    spec:
+      containers:
+      - name: app-widget
+        image: {{.appwidget.image}}
+        imagePullPolicy: IfNotPresent
+        resources:
+{{ if .appwidget.resourcerequest }}
+          requests:
+            memory: "{{.appwidget.memoryrequest}}"
+            cpu: "{{.appwidget.memoryrequest}}"
+{{ end }}
+{{ if .appwidget.resourcelimit }}
+          limits:
+            memory: "{{.appwidget.memorylimit}}"
+            cpu: "{{.appwidget.cpulimit}}"
+{{ end }}
+        env:
+        - name: NODE_ENV
+          value: {{.appwidget.environment}}
+        ports:
+        - containerPort: 3000
+        readinessProbe:
+          httpGet:
+            path: /api/currentUser
+            port: 3000
+          periodSeconds: 10
+          timeoutSeconds: 15
+          successThreshold: 2
+          failureThreshold: 5

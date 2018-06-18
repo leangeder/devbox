@@ -1,0 +1,17 @@
+{{.templatepreamble}}
+kind: Service
+apiVersion: v1
+metadata:
+  name: app-pages
+  namespace: {{.namespace}}
+spec:
+  type: NodePort
+  selector:
+    app: app-pages
+    type: {{.apppages.type}}
+    environment: {{.apppages.environment}}
+  ports:
+    - protocol: TCP
+      port: 9087
+      targetPort: 80
+      name: app-pages

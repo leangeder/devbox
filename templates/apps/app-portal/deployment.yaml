@@ -1,0 +1,51 @@
+{{.templatepreamble}}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: app-portal
+  namespace: {{.namespace}}
+spec:
+  revisionHistoryLimit: 5
+  replicas: {{.appportal.minreplicas}}
+  minReadySeconds: 20
+  progressDeadlineSeconds: {{.appportal.rolloutdeadlinetime}}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: app-portal
+        type: {{.appportal.type}}
+        environment: {{.appportal.environment}}
+    spec:
+      containers:
+      - name: app-portal
+        image: {{.appportal.image}}
+        imagePullPolicy: IfNotPresent
+        resources:
+{{ if .appportal.resourcerequest }}
+          requests:
+            memory: "{{.appportal.memoryrequest}}"
+            cpu: "{{.appportal.memoryrequest}}"
+{{ end }}
+{{ if .appportal.resourcelimit }}
+          limits:
+            memory: "{{.appportal.memorylimit}}"
+            cpu: "{{.appportal.cpulimit}}"
+{{ end }}
+        env:
+        - name: NODE_ENV
+          value: {{.appportal.environment}}
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          periodSeconds: 10
+          timeoutSeconds: 15
+          successThreshold: 2
+          failureThreshold: 5
+        ports:
+        - containerPort: 80

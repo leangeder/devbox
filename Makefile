@@ -43,21 +43,15 @@ ifeq ($(UNAME),windows_nt)
 endif
 
 /usr/local/bin/istioctl:
-	@mkdir bin
-	@cd bin; curl -L https://git.io/getLatestIstio | sh -
-	@ln -sf bin/*/bin/istioctl /usr/local/bin/istioctl
+	@curl -L https://git.io/getLatestIstio | sh -
+	@sudo mv istio-* /usr/local/lib/istio
+	@sudo ln -sf /usr/local/lib/istio/bin/istioctl /usr/local/bin/istioctl
 
 /usr/local/bin/vortex:
 	@sudo rm -rf /tmp/vortex
 	@git clone git@github.com:AlexsJones/vortex.git /tmp/vortex
 	@docker run --rm -ti -v /tmp/vortex/:/go -e GOBIN="/go/bin" -w /go golang:1.8.3 sh -c 'go get -v && go build -v -o vortex && chmod +x vortex'
 	@sudo mv /tmp/vortex/vortex /usr/local/bin/
-
-/usr/local/bin/go:
-	@curl -Lo go$(GO_VERSION).tar.gz https://dl.google.com/go/go$(GO_VERSION).$(UNAME)-amd64.tar.gz
-	@tar -C /usr/local -xzf go$(GO_VERSION).tar.gz
-	@rm -f go$(GO_VERSION).tar.gz
-	@ln -s /usr/local/lib/go/bin/go /usr/local/bin/go
 
 ifeq (create,$(firstword $(MAKECMDGOALS)))
   APP_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
@@ -101,7 +95,7 @@ $(PATH_BEAMERY_META):
 $(PATH_BEAMERY_FOLDER):
 	git clone git@github.com:SeedJobs/devops-kubernetes-beamery.git $(PATH_BEAMERY_FOLDER)
 
-up: /usr/local/bin/kubectl /usr/local/bin/go /usr/local/bin/vortex /usr/local/bin/meta-git /usr/local/bin/minikube $(PATH_BEAMERY_FOLDER)
+up: /usr/local/bin/kubectl /usr/local/bin/vortex /usr/local/bin/meta-git /usr/local/bin/minikube $(PATH_BEAMERY_FOLDER)
 # ifeq (0,$(shell minikube status | grep Running | wc -l))
 # 	minikube config set WantReportErrorPrompt false
 # 	minikube start --memory=6144 --extra-config=apiserver.authorization-mode=RBAC --extra-config=controller-manager.cluster-signing-cert-file="/var/lib/localkube/certs/ca.crt" --extra-config=controller-manager.cluster-signing-key-file="/var/lib/localkube/certs/ca.key" --extra-config=apiserver.admission-control="NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
@@ -166,16 +160,19 @@ apps: $(APP_LIST);
 
 service: $(SERVICE_NAME) $(SERVICE_ENV);
 
-$(APP_NAME):
+$(APP_NAME): /usr/local/bin/istioctl
 ifeq (update,$(firstword $(MAKECMDGOALS)))
-	# eval $$(minikube docker-env); cd $(PATH_BEAMERY_META)/$@; docker build -t $@:$(TIMESTAMP) -f Dockerfile .;
-	cd $(PATH_BEAMERY_META)/$@; docker build -t $@:$(TIMESTAMP) -f Dockerfile .; gcloud docker -- push $(CONTAINER)-$(APP_ENV)/$@:v-master-bleedingedge
-	kubectl set image -f $(PATH_BEAMERY_FOLDER)/$(PATH_DESTINATION)/$@/deployment.yaml $@=$@:$(TIMESTAMP)
+	# # eval $$(minikube docker-env); cd $(PATH_BEAMERY_META)/$@; docker build -t $@:$(TIMESTAMP) -f Dockerfile .;
+	# cd $(PATH_BEAMERY_META)/$@; docker build -t $@:$(TIMESTAMP) -f Dockerfile .; gcloud docker -- push $(CONTAINER)-$(APP_ENV)/$@:v-master-bleedingedge
+	cd $(PATH_BEAMERY_META)/$@; docker build -t $@:$(TIMESTAMP) -f Dockerfile .; gcloud docker -- push $(CONTAINER)-trials/$@:$(TIMESTAMP)
+	kubectl set image -f $(PATH_DESTINATION)/apps/$@/deployment.yaml $@=$(CONTAINER)-trials/$@:$(TIMESTAMP)
+	# kubectl set image -f $(PATH_DESTINATION)/apps/$@/deployment.yaml $@=$@:$(TIMESTAMP)
 else
-	# eval $$(minikube docker-env); cd $(PATH_BEAMERY_META)/$@; docker build -t $(CONTAINER)-$(APP_ENV)/$@:v-master-bleedingedge -f Dockerfile .;
-	cd $(PATH_BEAMERY_META)/$@; docker build -t $(CONTAINER)-$(APP_ENV)/$@:v-master-bleedingedge -f Dockerfile .; gcloud docker -- push $(CONTAINER)-$(APP_ENV)/$@:v-master-bleedingedge
-	mkdir -p $(PATH_PROJECT)/environments/apps/$@
-	ln -sf $(PATH_BEAMERY_FOLDER)/environments/$(APP_ENV).yaml $(PATH_PROJECT)/environments/apps/$@/$(APP_ENV).yaml
+	# # eval $$(minikube docker-env); cd $(PATH_BEAMERY_META)/$@; docker build -t $(CONTAINER)-$(APP_ENV)/$@:v-master-bleedingedge -f Dockerfile .;
+	# cd $(PATH_BEAMERY_META)/$@; docker build -t $(CONTAINER)-$(APP_ENV)/$@:v-master-bleedingedge -f Dockerfile .; gcloud docker -- push $(CONTAINER)-$(APP_ENV)/$@:v-master-bleedingedge
+	cd $(PATH_BEAMERY_META)/$@; docker build -t $(CONTAINER)-trials/$@:v-master-bleedingedge -f Dockerfile .; gcloud docker -- push $(CONTAINER)-trials/$@:v-master-bleedingedge
+	mkdir -p $(PATH_PROJECT)/environments/apps
+	ln -sf $(PATH_BEAMERY_FOLDER)/environments/ $(PATH_PROJECT)/environments/apps/$@
 	mkdir -p $(PATH_PROJECT)/$(PATH_TEMPLATE)/apps/
 	rm -f $(PATH_PROJECT)/$(PATH_TEMPLATE)/apps/$@
 	ln -s $(PATH_BEAMERY_FOLDER)/$(PATH_TEMPLATE)/$@ $(PATH_PROJECT)/$(PATH_TEMPLATE)/apps/$@
@@ -190,8 +187,9 @@ endif
 	kubectl create secret tls lumberjack-ssl --cert=/tmp/lumberjack.crt --key=/tmp/lumberjack.key --namespace=$(APP_ENV)
 	kubectl replace -f $(PATH_PROJECT)/$(PATH_DESTINATION)/apps/$@/ --force
 
-	kubectl set image -f $(PATH_BEAMERY_FOLDER)/$(PATH_DESTINATION)/$@/deployment.yaml $@=$(CONTAINER)-$(APP_ENV)/$@:v-master-bleedingedge
-	kubectl get deployment --namespace=$(APP_ENV) -o yaml | istioctl kube-inject -f - | kubectl apply -f -
+	kubectl set image -f $(PATH_DESTINATION)/apps/$@/deployment.yaml $@=$(CONTAINER)-trials/$@:v-master-bleedingedge
+	# kubectl set image -f $(PATH_DESTINATION)/apps/$@/deployment.yaml $@=$(CONTAINER)-$(APP_ENV)/$@:v-master-bleedingedge
+	# kubectl get deployment --namespace=$(APP_ENV) -o yaml | istioctl kube-inject -f - | kubectl apply -f -
 endif
 
 help:

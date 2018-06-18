@@ -1,0 +1,14 @@
+{{.templatepreamble}}
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-notifications-as
+  namespace: {{.namespace}}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1beta1
+    kind: Deployment
+    name: api-notifications
+  minReplicas: {{.apinotifications.minreplicas}}
+  maxReplicas: {{.apinotifications.maxreplicas}}
+  targetCPUUtilizationPercentage: 100

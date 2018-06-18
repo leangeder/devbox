@@ -1,0 +1,108 @@
+{{.templatepreamble}}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: api-portal
+  namespace: {{.namespace}}
+spec:
+  revisionHistoryLimit: 5
+  replicas: {{.apiportal.minreplicas}}
+  minReadySeconds: 20
+  progressDeadlineSeconds: {{.apiportal.rolloutdeadlinetime}}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: api-portal
+        type: {{.apiportal.type}}
+        environment: {{.apiportal.environment}}
+    spec:
+      containers:
+      - name: api-portal
+        image: {{.apiportal.image}}
+        imagePullPolicy: IfNotPresent
+        resources:
+{{ if .apiportal.resourcerequest }}
+          requests:
+            memory: "{{.apiportal.memoryrequest}}"
+            cpu: "{{.apiportal.memoryrequest}}"
+{{ end }}
+{{ if .apiportal.resourcelimit }}
+          limits:
+            memory: "{{.apiportal.memorylimit}}"
+            cpu: "{{.apiportal.cpulimit}}"
+{{ end }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9088
+            httpHeaders:
+              - name: Authorization
+                value: {{.basicauthheader}}
+{{- if not .dev }}
+          lifecycle:
+            postStart:
+              exec:
+                command: ["/bin/sh", "-c", "curl -X POST -H 'Content-type: application/json' --data '{\"text\":\"pod '$HOSTNAME' has started!\"}' {{.slackalerthook}} "]
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "curl -X POST -H 'Content-type: application/json' --data '{\"text\":\"pod '$HOSTNAME' has stopped!\"}' {{.slackalerthook}} "]
+{{- end }}
+        ports:
+        - containerPort: 9088
+        volumeMounts:
+        - mountPath: /logstash/certs
+          name: ssl
+{{- if .dev }}
+        - mountPath: /src/node_modules/api-plugin-configs/settings/env/default.js
+          name: test
+          subPath: default.js
+        - mountPath: /src/node_modules/api-plugin-configs/settings/queues.js
+          name: test2
+          subPath: queues.js
+{{- else }}
+        - name: configmap
+          mountPath: /etc/hosts
+          subPath: hosts
+{{- end }}
+        env:
+        - name: NODE_ENV
+          value: "{{.apiportal.environment}}"
+{{- if .dev }}
+        - name: DEBUG
+          value: "debug"
+        - name: MONGO
+          value: "mongodb://root:root@mongodb.mongodb.svc.cluster.local:27017/seed?authSource=admin"
+        - name: RABBITMQ
+          value: "amqp://guest:guest@rabbitmq.rabbitmq.svc.cluster.local/"
+        - name: REDIS
+          value: "redis://redis-cluster.redis.svc.cluster.local:6379/"
+        - name: ES
+          value: "http://elasticsearch.elasticsearch.csv.cluster.local:9200"
+{{- end }}
+      volumes:
+      - name: ssl
+        secret:
+          secretName: lumberjack-ssl
+{{- if .dev }}
+      - name: test
+        configMap:
+          name: config-test
+          items:
+          - key: default.js
+            path: default.js
+      - name: test2
+        configMap:
+          name: config-test
+          items:
+          - key: queues.js
+            path: queues.js
+{{- else }}
+      - name: configmap
+        configMap:
+          name: {{.hostconfig}}
+{{- end }}

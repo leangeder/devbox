@@ -1,0 +1,16 @@
+{{.templatepreamble}}
+kind: Service
+apiVersion: v1
+metadata:
+  name: api-portal
+  namespace: {{.namespace}}
+spec:
+  type: NodePort
+  selector:
+    app: api-portal
+    type: {{.apiportal.type}}
+    environment: {{.apiportal.environment}}
+  ports:
+    - protocol: TCP
+      port: 9088
+      name: api-portal

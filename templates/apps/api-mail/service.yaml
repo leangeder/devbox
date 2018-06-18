@@ -1,0 +1,16 @@
+{{.templatepreamble}}
+kind: Service
+apiVersion: v1
+metadata:
+  name: api-mail
+  namespace: {{.namespace}}
+spec:
+  type: NodePort
+  selector:
+    app: api-mail
+    type: {{.apimail.type}}
+    environment: {{.apimail.environment}}
+  ports:
+    - protocol: TCP
+      port: 2501
+      name: api-mail

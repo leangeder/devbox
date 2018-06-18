@@ -1,0 +1,14 @@
+{{.templatepreamble}}
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: app-admin-as
+  namespace: {{.namespace}}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1beta1
+    kind: Deployment
+    name: app-admin
+  minReplicas: {{.appadmin.minreplicas}}
+  maxReplicas: {{.appadmin.maxreplicas}}
+  targetCPUUtilizationPercentage: 100

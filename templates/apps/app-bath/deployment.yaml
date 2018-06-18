@@ -1,0 +1,51 @@
+{{.templatepreamble}}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: app-bath
+  namespace: {{.namespace}}
+spec:
+  revisionHistoryLimit: 5
+  replicas: {{.appbath.minreplicas}}
+  minReadySeconds: 20
+  progressDeadlineSeconds: {{.appbath.rolloutdeadlinetime}}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: app-bath
+        type: {{.appbath.type}}
+        environment: {{.appbath.environment}}
+    spec:
+      containers:
+      - name: app-bath
+        image: {{.appbath.image}}
+        imagePullPolicy: IfNotPresent
+        resources:
+{{ if .appbath.resourcerequest }}
+          requests:
+            memory: "{{.appbath.memoryrequest}}"
+            cpu: "{{.appbath.memoryrequest}}"
+{{ end }}
+{{ if .appbath.resourcelimit }}
+          limits:
+            memory: "{{.appbath.memorylimit}}"
+            cpu: "{{.appbath.cpulimit}}"
+{{ end }}
+        env:
+        - name: NODE_ENV
+          value: {{.appbath.environment}}
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          periodSeconds: 10
+          timeoutSeconds: 15
+          successThreshold: 2
+          failureThreshold: 5

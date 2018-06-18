@@ -1,0 +1,9 @@
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: app-widget
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: app-widget

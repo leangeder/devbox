@@ -1,0 +1,60 @@
+{{.templatepreamble}}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: app-site
+  namespace: {{.namespace}}
+spec:
+  revisionHistoryLimit: 5
+  replicas: {{.appsite.minreplicas}}
+  minReadySeconds: 20
+  progressDeadlineSeconds: {{.appsite.rolloutdeadlinetime}}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: app-site
+        type: {{.appsite.type}}
+        environment: {{.appsite.environment}}
+    spec:
+      containers:
+      - name: app-site
+        image: {{.appsite.image}}
+        imagePullPolicy: IfNotPresent
+        resources:
+{{ if .appsite.resourcerequest }}
+          requests:
+            memory: "{{.appsite.memoryrequest}}"
+            cpu: "{{.appsite.memoryrequest}}"
+{{ end }}
+{{ if .appsite.resourcelimit }}
+          limits:
+            memory: "{{.appsite.memorylimit}}"
+            cpu: "{{.appsite.cpulimit}}"
+{{ end }}
+{{- if not .dev }}
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "curl -X POST -H 'Content-type: application/json' --data '{\"text\":\"pod '$HOSTNAME' has started!\"}' {{.slackalerthook}} "]
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "curl -X POST -H 'Content-type: application/json' --data '{\"text\":\"pod '$HOSTNAME' has stopped!\"}' {{.slackalerthook}} "]
+{{ end }}
+        env:
+        - name: NODE_ENV
+          value: {{.appsite.environment}}
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet:
+            path: /getting-started
+            port: 80
+          periodSeconds: 10
+          timeoutSeconds: 15
+          successThreshold: 2
+          failureThreshold: 5

@@ -1,0 +1,14 @@
+{{.templatepreamble}}
+kind: Service
+apiVersion: v1
+metadata:
+  name: api-core
+  namespace: {{.namespace}}
+spec:
+  selector:
+    app: api-core
+    type: {{.apicore.type}}
+    environment: {{.apicore.environment}}
+  ports:
+  - name: http
+    port: 9089

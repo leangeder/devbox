@@ -1,0 +1,17 @@
+{{.templatepreamble}}
+kind: Service
+apiVersion: v1
+metadata:
+  name: app-admin
+  namespace: {{.namespace}}
+spec:
+  type: NodePort
+  selector:
+    app: app-admin
+    type: {{.appadmin.type}}
+    environment: {{.appadmin.environment}}
+  ports:
+    - protocol: TCP
+      port: 8089
+      targetPort: 2505
+      name: app-admin

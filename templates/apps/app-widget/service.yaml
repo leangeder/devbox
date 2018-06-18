@@ -1,0 +1,16 @@
+{{.templatepreamble}}
+kind: Service
+apiVersion: v1
+metadata:
+  name: app-widget
+  namespace: {{.namespace}}
+spec:
+  type: NodePort
+  selector:
+    app: app-widget
+    type: {{.appwidget.type}}
+    environment: {{.appwidget.environment}}
+  ports:
+    - protocol: TCP
+      port: 3000
+      name: app-widget

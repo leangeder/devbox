@@ -1,0 +1,109 @@
+{{.templatepreamble}}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: app-admin
+  namespace: {{.namespace}}
+spec:
+  revisionHistoryLimit: 5
+  replicas: {{.appadmin.minreplicas}}
+  minReadySeconds: 20
+  progressDeadlineSeconds: {{.appadmin.rolloutdeadlinetime}}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: app-admin
+        type: {{.appadmin.type}}
+        environment: {{.appadmin.environment}}
+    spec:
+      containers:
+      - name: app-admin
+        image: {{.appadmin.image}}
+        imagePullPolicy: IfNotPresent
+        resources:
+{{ if .appadmin.resourcerequest }}
+          requests:
+            memory: "{{.appadmin.memoryrequest}}"
+            cpu: "{{.appadmin.memoryrequest}}"
+{{ end }}
+{{ if .appadmin.resourcelimit }}
+          limits:
+            memory: "{{.appadmin.memorylimit}}"
+            cpu: "{{.appadmin.cpulimit}}"
+{{ end }}
+        readinessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 2505
+          periodSeconds: 10
+          timeoutSeconds: 15
+          successThreshold: 2
+          failureThreshold: 5
+{{- if not .dev }}
+          lifecycle:
+            postStart:
+              exec:
+                command: ["/bin/sh", "-c", "curl -X POST -H 'Content-type: application/json' --data '{\"text\":\"pod '$HOSTNAME' has started!\"}' {{.slackalerthook}} "]
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "curl -X POST -H 'Content-type: application/json' --data '{\"text\":\"pod '$HOSTNAME' has stopped!\"}' {{.slackalerthook}} "]
+{{- end }}
+        ports:
+        - containerPort: 2505
+        volumeMounts:
+        - mountPath: /logstash/certs
+          name: ssl
+{{- if .dev }}
+        - mountPath: /src/node_modules/api-plugin-configs/settings/env/default.js
+          name: test
+          subPath: default.js
+        - mountPath: /src/node_modules/api-plugin-configs/settings/queues.js
+          name: test2
+          subPath: queues.js
+{{- else }}
+        - name: configmap
+          mountPath: /etc/hosts
+          subPath: hosts
+{{- end }}
+        env:
+        - name: NODE_ENV
+          value: {{.appadmin.environment}}
+{{- if .dev }}
+        - name: DEBUG
+          value: "debug"
+        - name: MONGO
+          value: "mongodb://root:root@mongodb.mongodb.svc.cluster.local:27017/seed?authSource=admin"
+        - name: RABBITMQ
+          value: "amqp://guest:guest@rabbitmq.rabbitmq.svc.cluster.local/"
+        - name: REDIS
+          value: "redis://redis-cluster.redis.svc.cluster.local:6379/"
+        - name: ES
+          value: "http://elasticsearch.elasticsearch.csv.cluster.local:9200"
+{{- end }}
+      volumes:
+      - name: ssl
+        secret:
+          secretName: lumberjack-ssl
+{{- if .dev }}
+      - name: test
+        configMap:
+          name: config-test
+          items:
+          - key: default.js
+            path: default.js
+      - name: test2
+        configMap:
+          name: config-test
+          items:
+          - key: queues.js
+            path: queues.js
+{{- else }}
+      - name: configmap
+        configMap:
+          name: {{.hostconfig}}
+{{- end }}

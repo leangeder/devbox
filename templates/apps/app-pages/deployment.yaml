@@ -1,0 +1,51 @@
+{{.templatepreamble}}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: app-pages
+  namespace: {{.namespace}}
+spec:
+  revisionHistoryLimit: 5
+  replicas: {{.apppages.minreplicas}}
+  minReadySeconds: 20
+  progressDeadlineSeconds: {{.apppages.rolloutdeadlinetime}}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: app-pages
+        type: {{.apppages.type}}
+        environment: {{.apppages.environment}}   
+    spec:
+      containers:
+      - name: app-pages
+        image: {{.apppages.image}}
+        imagePullPolicy: IfNotPresent
+        resources:
+{{ if .apppages.resourcerequest }}
+          requests:
+            memory: "{{.apppages.memoryrequest}}"
+            cpu: "{{.apppages.memoryrequest}}"
+{{ end }}
+{{ if .apppages.resourcelimit }}
+          limits:
+            memory: "{{.apppages.memorylimit}}"
+            cpu: "{{.apppages.cpulimit}}"
+{{ end }}
+        env:
+        - name: NODE_ENV
+          value: {{.apppages.environment}}
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          periodSeconds: 10
+          timeoutSeconds: 15
+          successThreshold: 2
+          failureThreshold: 5
+        ports:
+          - containerPort: 80

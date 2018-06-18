@@ -1,0 +1,50 @@
+{{.templatepreamble}}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: app-site-ng2
+  namespace: {{.namespace}}
+spec:
+  revisionHistoryLimit: 5
+  replicas: {{.appsiteng2.minreplicas}}
+  minReadySeconds: 20
+  progressDeadlineSeconds: {{.appsiteng2.rolloutdeadlinetime}}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: app-site-ng2
+        type: {{.appsiteng2.type}}
+        environment: {{.appsiteng2.environment}}
+    spec:
+      containers:
+      - name: app-site-ng2
+        image: {{.appsiteng2.image}}
+        resources:
+{{ if .appsiteng2.resourcerequest }}
+          requests:
+            memory: "{{.appsiteng2.memoryrequest}}"
+            cpu: "{{.appsiteng2.memoryrequest}}"
+{{ end }}
+{{ if .appsiteng2.resourcelimit }}
+          limits:
+            memory: "{{.appsiteng2.memorylimit}}"
+            cpu: "{{.appsiteng2.cpulimit}}"
+{{ end }}
+        env:
+        - name: NODE_ENV
+          value: {{.appsiteng2.environment}}
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          periodSeconds: 10
+          timeoutSeconds: 15
+          successThreshold: 2
+          failureThreshold: 5

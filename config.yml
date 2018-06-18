@@ -1,0 +1,222 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-test
+  namespace: preview
+data:
+  queues.js: |
+    'use strict';
+
+    // Set RabbitMQ credentials from the environment
+    const RABBITMQ_USER = process.env.RABBITMQ_USER || 'beamery';
+    const RABBITMQ_PASS = process.env.RABBITMQ_PASS || 'da813Sf8XJFKdsVdsMjf';
+
+    module.exports = {
+        $filter: 'env',
+        production: {
+            activeDriver: 'amqp',
+            redisHost: 'beamery-prod.cian68.ng.0001.use1.cache.amazonaws.com',
+            redisPort: 6379,
+            redisPassword: '',
+            redisDatabase: 0,
+            amqp: {
+                connectionUrl: `amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@pink-wombat.in.cloudamqp.com/nygaqqui`,
+                heartBeat: '600'
+            },
+            secureJobPass: '$2a$10$z3Bhz908NdJ3IOAcbGENruh9bAK.882lZLrV/HdKmOEHastt97Xm.'
+        },
+        deis: {
+            activeDriver: 'amqp',
+            redisHost: 'beamery-prod.cian68.ng.0001.use1.cache.amazonaws.com',
+            redisPort: 6379,
+            redisPassword: '',
+            redisDatabase: 0,
+            amqp: {
+                connectionUrl: `amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@pink-wombat.in.cloudamqp.com/nygaqqui`,
+                heartBeat: '600'
+            },
+            secureJobPass: '$2a$10$z3Bhz908NdJ3IOAcbGENruh9bAK.882lZLrV/HdKmOEHastt97Xm.'
+        },
+        staging: {
+            activeDriver: 'amqp',
+            redisHost: 'redis-server',
+            redisPort: 6379,
+            redisPassword: '',
+            redisDatabase: 0,
+            amqp: {
+                connectionUrl: `amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbit-server/staging`,
+                heartBeat: '600'
+            },
+            secureJobPass: '$2a$10$zUxao9rFtLysbj2lKwVeneG/yHbUQXMRyUDYQEl5oWmQWYetUReSW'
+        },
+        preview: {
+            activeDriver: 'amqp',
+            redisHost: 'redis-server',
+            redisPort: 6380,
+            redisPassword: '',
+            redisDatabase: 0,
+            amqp: {
+                connectionUrl: `amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbit-server/preview`,
+                heartBeat: '600'
+            },
+            secureJobPass: '$2a$10$Eb2ipcpiz9wdphy5FBo27eQFZWm/YQb3h07AeMcJFNRp.m.nWPP0m'
+        },
+        preproduction: {
+            activeDriver: 'amqp',
+            redisHost: 'redis-server',
+            redisPort: 6380,
+            redisPassword: '',
+            redisDatabase: 0,
+            amqp: {
+                connectionUrl: `amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbit-server/preproduction`,
+                heartBeat: '600'
+            },
+            secureJobPass: '$2a$10$9jigDlumqWAemiYKoV13Y.k6vbq9wmge41M3o4LT6FVkmKF6t3UFy'
+        },
+        kubernetes: {
+            activeDriver: 'amqp',
+            redisHost: 'redis-server',
+            redisPort: 6380,
+            redisPassword: '',
+            redisDatabase: 0,
+            amqp: {
+                connectionUrl: `amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbit-server/production`,
+                heartBeat: '600'
+            },
+            secureJobPass: '$2a$10$z3Bhz908NdJ3IOAcbGENruh9bAK.882lZLrV/HdKmOEHastt97Xm.'
+        },
+        testing: {
+            activeDriver: 'amqp',
+            redisHost: 'redis-server',
+            redisPort: 6381,
+            redisPassword: '',
+            redisDatabase: 0,
+            amqp: {
+                connectionUrl: `amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbit-server/testing`,
+                heartBeat: '600'
+            },
+            secureJobPass: '$2a$10$NU4uDe6OUQp3xGKpkXURMOiITcqtvlYzzDvTerjq71Y.PGwAXJunu'
+        },
+        $default: {
+            activeDriver: 'amqp',
+            // redisHost: 'l5d-tcp.linkerd.svc.cluster.local',
+            redisHost: 'redis-cluster.redis.svc.cluster.local',
+            // redisPort: '7474',
+            redisPort: '6379',
+            redisPassword: '',
+            redisDatabase: 0,
+            amqp: {
+                connectionUrl: process.env.RABBITMQ || '',
+                // connectionUrl: process.env.RABBITMQ || 'amqp://guest:guest@rabbitmq.rabbitmq.svc.cluster.local/',
+                // connectionUrl: 'amqp://guest:guest@l5d-tcp.linkerd.svc.cluster.local:7494/',
+                heartBeat: '600'
+            },
+            secureJobPass: '$2a$10$NU4uDe6OUQp3xGKpkXURMOiITcqtvlYzzDvTerjq71Y.PGwAXJunu'
+        }
+    }
+  default.js: |
+    'use strict';
+
+    module.exports = {
+
+        // API URLs: The accessible URLs for our main APIs (core, portal, mail, notification, admin)
+
+        api: 'http://api.beamery.local',
+        portalApi: 'http://api-portail',
+        unifierApi: 'http://api-portail',
+        // unifierApi: 'http://portal.beamery.local:9087',
+        mailApi: 'http://api-mail',
+        notificationsApi: 'http://api-notify',
+        busRouteApi: 'http://bus.dev.beamery.local',
+
+        // External API URLs:
+
+        externalApi: 'http://api.beamery.local:9089',
+        externalPortalApi: 'http://portal.beamery.local:9088',
+        externalUnifierApi: 'http://portal.beamery.local:9087',
+        externalMailApi: 'http://mail.beamery.local:2501',
+        externalNotificationsApi: 'http://notify.beamery.local',
+
+        // API Ports: The connection ports for our main APIs (core, portal, mail, notification, admin)
+
+        apiPort: 9089,
+        notificationsApiPort: 8000,
+        portalApiPort: 9088,
+        unifierApiPort: 9087,
+        mailApiPort: 2501,
+        backofficePort: 2505,
+
+        // Acessible URLs: These are the main URLs for the application, website, admin page and widget
+
+        widgetUrl: 'widget.beamery.local:3000',
+        appUrl: 'app.beamery.local:9001',
+        pagesUrl: 'pages.beamery.local:3000',
+        siteUrl: 'beamery.local',
+        adminUrl: 'admin.beamery.local:2505',
+
+        workers: 1,
+
+        // Connection Parameters: Connection parameteres for our Databases (Mongo and Redis)
+
+        mongo: process.env.MONGO || '',
+        // mongo: process.env.MONGO || 'mongodb://root:root@mongodb.mongodb.svc.cluster.local:27017/seed?authSource=admin',
+        // // mongo: process.env.MONGO || 'mongodb://root:root@l5d-tcp.linkerd.svc.cluster.local:7484/seed?authSource=admin',
+        mongoPem: false,
+        elasticsearch: {
+            host: process.env.ES || '',
+            // host: process.env.ES || 'http://elasticsearch.elasticsearch.svc.cluster.local:9200',
+            apiVersion: '5.0'
+        },
+
+        esContactsIdx: 'seed.contacts',
+        esActivitiesIdx: 'seed.activities',
+        esEventsIdx: 'seed.events',
+        esOrganisationsIdx: 'seed.organisations',
+        esOrganisationsKBIdx: 'seed.organisationskb',
+        esVacancyActivitiesIdx: 'seed.vacancy-activities',
+
+        // When we connect we will check options in the order of; cluster, sentinels (an array and a master name), with the fallback as the `host`.
+        redis: {
+            cluster: {},
+            sentinels: [],
+            name: null,
+            // host: 'redis://l5d-tcp.linkerd.svc.cluster.local:7474/'
+            host: process.env.REDIS || ''
+            // host: process.env.REDIS || 'redis://redis-cluster.redis.svc.cluster.local:6379/'
+        },
+
+        /**
+        * apiKey and apiToken are Cross-Site-Request-Forgery (XSRF) as it's a requirement for our secuerity scans that an XSRF token must be matched between the FE and BE so that* the API always knows that it's talking to a real app, and not one that is hacked
+        * apiAdminKey is a key for our own public API so we can ping it from the queue or cron
+        */
+
+        apiAdminKey: 'a139f29c-5103-5c5a-842b-ddd4a0',
+        apiKey: 'e129f27c-5103-5c5c-844b-cdf0a2',
+        apiToken: 'r4t3wfef-4568-6v3c-124b-erbre4',
+
+        /**
+        * CORs: introduces a standard mechanism that can be used by all browsers for implementing cross-domain requests. CORs allows apps to contact the * APIs so browsers won't deny access as the API basically says app.whatever is allowed to talk to me
+        * origin (Access-Control-Allow-Origin): indicates whether a resource can be shared based by returning the value of the Origin request header
+        * credentials (Access-Control-Allow-Credentials) indicates whether the response to request can be exposed when the omit credentials flag is unset. When part of the response * to a preflight request it indicates that the actual request can include user credentials
+        * additionalHeaders: Any additional headers to be sent as well. Adding X-XSRF-BEAMERY and X-BEAMERY headers to CORs
+        * we are letting the auth plugin know (and the apps) to use XSRF
+        */
+
+        cors: {
+            origin: [
+                'http://beamery.local',
+                'http://marketing.beamery.local:9000',
+                'http://mail.beamery.local:2501',
+                'http://app.beamery.local:9001',
+                'http://widget.beamery.local:3000',
+                'http://portal.beamery.local:3000',
+                'http://pages.beamery.local:3000',
+                'http://bus.dev.beamery.local:2511',
+            ],
+            credentials: true,
+            additionalHeaders: ['X-XSRF-BEAMERY', 'X-BEAMERY']
+        }
+
+    }
+

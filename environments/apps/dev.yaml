@@ -1,0 +1,124 @@
+dev: true
+sslchain: dev-tls
+templatepreamble: "#This is an auto generated file"
+namespace: dev
+gcloudprojectid: "beamery-trials"
+
+apicore:
+  environment: dev
+  image: us.gcr.io/beamery-trials/api-core:v-master-bleedingedge
+  enablegcptrace: ""
+  minreplicas: 1
+  maxreplicas: 3
+  rolloutdeadlinetime: 90
+  resourcerequest:
+  resourcelimit:
+  type: api
+
+apimail:
+  environment: dev
+  image: us.gcr.io/beamery-trials/api-mail:v-master-bleedingedge
+  enablegcptrace: ""
+  minreplicas: 2
+  maxreplicas: 3
+  rolloutdeadlinetime: 90
+  resourcerequest:
+  resourcelimit:
+  type: api
+
+apinotifications:
+  environment: dev
+  image: us.gcr.io/beamery-trials/api-notifications:v-master-bleedingedge
+  minreplicas: 1
+  maxreplicas: 1
+  rolloutdeadlinetime: 90
+  resourcerequest:
+  resourcelimit:
+  type: api
+
+apiportal:
+  environment: dev
+  image: us.gcr.io/beamery-trials/api-portal:v-master-bleedingedge
+  minreplicas: 2
+  maxreplicas: 3
+  rolloutdeadlinetime: 90
+  resourcerequest:
+  resourcelimit:
+  type: api
+
+appadmin:
+  environment: dev
+  image: us.gcr.io/beamery-trials/app-admin:v-master-bleedingedge
+  minreplicas: 2
+  maxreplicas: 3
+  rolloutdeadlinetime: 90
+  resourcerequest:
+  resourcelimit:
+  type: app
+
+appbeamery:
+  environment: dev
+  image: us.gcr.io/beamery-trials/app-beamery:v-master-bleedingedge
+  minreplicas: 2
+  maxreplicas: 3
+  rolloutdeadlinetime: 90
+
+appbath:
+  environment: dev
+  image: us.gcr.io/beamery-trials/app-bath:v-master-bleedingedge
+  minreplicas: 2
+  maxreplicas: 3
+  rolloutdeadlinetime: 90
+  resourcerequest:
+  resourcelimit:
+  type: app
+
+apppages:
+  environment: dev
+  image: us.gcr.io/beamery-trials/app-pages:v-master-bleedingedge
+  minreplicas: 2
+  maxreplicas: 3
+  rolloutdeadlinetime: 90
+  resourcerequest:
+  resourcelimit:
+  type: app
+
+appportal:
+  environment: dev
+  image: us.gcr.io/beamery-trials/app-portal:v-master-bleedingedge
+  minreplicas: 2
+  maxreplicas: 3
+  rolloutdeadlinetime: 90
+  resourcerequest:
+  resourcelimit:
+  type: app
+
+appsiteng2:
+  environment: dev
+  image: us.gcr.io/beamery-trials/app-site-ng2:v-master-bleedingedge
+  minreplicas: 2
+  maxreplicas: 3
+  rolloutdeadlinetime: 90
+  resourcerequest:
+  resourcelimit:
+  type: app
+
+appsite:
+  environment: dev
+  image: us.gcr.io/beamery-trials/app-site:v-master-bleedingedge
+  minreplicas: 2
+  maxreplicas: 3
+  rolloutdeadlinetime: 90
+  resourcerequest:
+  resourcelimit:
+  type: app
+
+appwidget:
+  environment: dev
+  image: us.gcr.io/beamery-trials/app-widget:v-master-bleedingedge
+  minreplicas: 1
+  maxreplicas: 1
+  rolloutdeadlinetime: 90
+  resourcerequest:
+  resourcelimit:
+  type: app
