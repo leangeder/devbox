@@ -1,0 +1,81 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: vault
+  namespace: vault
+  labels:
+    app: vault
+    component: vault
+    role: services
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: vault
+        component: vault
+        role: services
+    spec:
+
+      containers:
+
+      - name: vault
+        image: "vault:0.10.0"
+        imagePullPolicy: IfNotPresent
+        command:
+        - "vault"
+        - "server"
+
+        - "-dev"
+        - "-dev-root-token-id=root"
+        - "-dev-listen-address=:8200"
+        - "log-level=debug"
+        # - "-dev-root-token-id=\"insecure-dev-only-token\""
+        # lifecycle:
+        #   postStart:
+        #     exec:
+        #       command:
+        #       - "/bin/sh"
+        #       - "-c"
+        #       - >
+        #         vault operator unseal -address http://127.0.0.1:8200 root
+
+        - "-config=/vault/config/config.hcl"
+        ports:
+        - name: http
+          containerPort: 8200
+        - name: server
+          containerPort: 8201
+        env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: "status.podIP"
+        - name: VAULT_CLUSTER_ADDR
+          value: "http://$(POD_IP):8201"
+
+        securityContext:
+          capabilities:
+            add:
+            - IPC_LOCK
+        volumeMounts:
+        - name: vault-config
+          mountPath: /vault/config/
+        - name: vault-root
+          mountPath: /vault/data/
+
+        resources:
+          limits:
+            cpu: 100m
+            memory: 256Mi
+          requests:
+            cpu: 5m
+            memory: 128Mi
+      volumes:
+      - name: vault-config
+        configMap:
+          name: "config-vault"
+      - name: vault-root
+        emptyDir: {}
+

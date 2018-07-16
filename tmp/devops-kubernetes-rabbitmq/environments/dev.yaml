@@ -1,0 +1,19 @@
+dev: "true"
+image: "rabbitmq:3.7-management"
+namespace: "rabbitmq"
+replica: "1"
+storage_size: "1Gi"
+storage_class: "standard"
+vhost_name: "dev"
+heartbeat: "600"
+affinity_key: "services"
+affinity_selector: "rabbitmq"
+cookie: "dGVzdDEyMzQ="
+env: dev
+resources:
+  requests:
+    cpu: "100m"
+    memory: "512Mi"
+  limits:
+    cpu: ""
+    memory: "512Mi"

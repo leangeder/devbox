@@ -1,0 +1,19 @@
+path "secret/data/dev/rabbitmq/*" {
+  capabilities = ["list","read"]
+}
+
+path "secret/metadata/dev/rabbitmq/*" {
+  capabilities = ["list","read"]
+}
+
+path "rabbitmq/creds/rabbitmq" {
+  capabilities = ["read"]
+}
+
+path "sys/leases/renew" {
+  capabilities = ["create"]
+}
+
+path "sys/leases/revoke" {
+  capabilities = ["update"]
+}

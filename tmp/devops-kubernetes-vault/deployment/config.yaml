@@ -1,0 +1,27 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-vault
+  namespace: vault
+  labels:
+    app: vault
+    component: vault
+    role: services
+data:
+  config.hcl: |
+    ui                 = true
+    api_addr           = "http://vault.beamery.local"
+    disable_mlock      = false
+
+
+    storage "file" {
+      path = "/vault/data"
+    }
+
+
+
+    listener "tcp" {
+      address          = "[::]:8200"
+
+    }

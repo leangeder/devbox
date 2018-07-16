@@ -1,0 +1,13 @@
+---
+namespace: "vault"
+url:
+  protocol: "http"
+  hostname: "vault.beamery.local"
+
+vault:
+  image: "vault:0.10.0"
+  replicas: 1
+  cpu_limit: 100m
+  memory_limit: 256Mi
+  cpu_request: 5m
+  memory_request: 128Mi

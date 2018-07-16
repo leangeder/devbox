@@ -1,0 +1,41 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-vault
+  namespace: {{.namespace}}
+  labels:
+    app: vault
+    component: vault
+    role: services
+data:
+  config.hcl: |
+    ui                 = true
+    api_addr           = "{{.url.protocol}}://{{.url.hostname}}"
+    disable_mlock      = false
+
+{{if .vault_init}}
+    storage "gcs" {
+     bucket           = "{{.vault.storage}}"
+      ha_enabled       = "true"
+    }
+{{else}}
+    storage "file" {
+      path = "/vault/data"
+    }
+{{end}}
+
+{{if .vault.dd_agent}}
+    telemetry {
+      dogstatsd_addr   = "{{.vault.dd_agent}}"
+      disable_hostname = true
+    }
+{{end}}
+    listener "tcp" {
+      address          = "[::]:8200"
+{{if .vault_init}}
+      tls_cert_file    = "/vault/tls/vault.pem"
+      tls_key_file     = "/vault/tls/vault-key.pem"
+      tls_min_version  = "tls12"
+{{end}}
+    }

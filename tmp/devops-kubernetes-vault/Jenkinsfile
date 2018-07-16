@@ -1,0 +1,43 @@
+/*
+ * Vault Jenkinsfile
+ *
+ * This Jenkinsfile will build all the required services to make ready to deploy.
+ * This will be picked up via the default org scan.
+ */
+
+ def projectName = "devops-beamery-vault"
+
+ node ('k8s') {
+   stage('Checkout files') {
+    git branch: env.BRANCH_NAME?: 'master', credentialsId: '54213d77-d44e-49ce-a635-4a2bef7fdf71', url: "git@github.com:SeedJobs/${projectName}.git"
+   }
+   stage('Validate templates') {
+     def ret = sh returnStatus: true, script: """
+      vortex --validate --template templates --varpath environment/global.yaml
+     """
+     if (ret != 0) {
+       slackSend color: '#E11B1B', message: "Issues with validating templates for ${env.JOB_NAME} (<${env.BUILD_URL}|Open>)"
+       error("Vortex validation failed")
+     }
+   }
+  stage('build vault-init image') {
+    def ret = sh returnStatus: true, script : """
+      chmod a+x files/builder.sh
+      # Builder expects to be run from inside the directory it lives in
+      (cd files && ./builder.sh)
+    """
+    if (ret != 0) {
+      slackSend color: "#E11B1B", message: "Unable to build the vault-init image ${env.JOB_NAME} (<${env.BUILD_URL}|Open>)"
+    }
+  }
+  stage('Push vault-init to GKR'){
+    // Will need a service account for global
+    withCredentials([file(credentialsId: 'GLOBAL', variable: 'key')]) {
+      sh '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file $key'
+    }
+    sh """
+      docker tag vault-init:latest us.gcr.io/beamery-global/vault-init:latest
+      /opt/google-cloud-sdk/bin/gcloud docker -- push us.gcr.io/beamery-global/vault-init:latest
+    """
+  }
+ }

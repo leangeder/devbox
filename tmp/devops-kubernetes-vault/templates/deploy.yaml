@@ -1,0 +1,120 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: vault
+  namespace: {{.namespace}}
+  labels:
+    app: vault
+    component: vault
+    role: services
+spec:
+  replicas: {{.vault.replicas}}
+  template:
+    metadata:
+      labels:
+        app: vault
+        component: vault
+        role: services
+    spec:
+{{if .vault_init}}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  app: vault
+{{end}}
+      containers:
+{{if .vault_init}}
+      - name: vault-init
+        image: {{.vault_init.image}}
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: CHECK_INTERVAL
+          value: "{{.vault_init.check_interval}}"
+        - name: GCS_BUCKET_NAME
+          value: "{{.vault_init.google_bucket}}"
+        - name: KMS_KEY_ID
+          value: "projects/{{.vault_init.project}}/locations/{{.vault_init.kms_id}}"
+{{end}}
+      - name: vault
+        image: "{{.vault.image}}"
+        imagePullPolicy: IfNotPresent
+        command:
+        - "vault"
+        - "server"
+{{if not .vault_init}}
+        - "-dev"
+        - "-dev-root-token-id=root"
+        - "-dev-listen-address=:8200"
+        - "log-level=debug"
+        # - "-dev-root-token-id=\"insecure-dev-only-token\""
+        # lifecycle:
+        #   postStart:
+        #     exec:
+        #       command:
+        #       - "/bin/sh"
+        #       - "-c"
+        #       - >
+        #         vault operator unseal -address http://127.0.0.1:8200 root
+{{end}}
+        - "-config=/vault/config/config.hcl"
+        ports:
+        - name: http
+          containerPort: 8200
+        - name: server
+          containerPort: 8201
+        env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: "status.podIP"
+        - name: VAULT_CLUSTER_ADDR
+          value: "{{.url.protocol}}://$(POD_IP):8201"
+{{if .vault_init}}
+        livenessProbe:
+          tcpSocket:
+            port: 8200
+        readinessProbe:
+          httpGet:
+            path: "/v1/sys/health?standbyok=true"
+            port: 8200
+            scheme: HTTPS
+          initialDelaySeconds: 5
+          periodSeconds: 10
+{{end}}
+        securityContext:
+          capabilities:
+            add:
+            - IPC_LOCK
+        volumeMounts:
+        - name: vault-config
+          mountPath: /vault/config/
+        - name: vault-root
+          mountPath: /vault/data/
+{{if .vault_init}}
+        - name: vault-secret
+          mountPath: /vault/tls
+{{end}}
+        resources:
+          limits:
+            cpu: {{ .vault.cpu_limit }}
+            memory: {{ .vault.memory_limit }}
+          requests:
+            cpu: {{ .vault.cpu_request }}
+            memory: {{ .vault.memory_request }}
+      volumes:
+      - name: vault-config
+        configMap:
+          name: "config-vault"
+      - name: vault-root
+        emptyDir: {}
+{{if .vault_init}}
+      - name: vault-secret
+        secret:
+          secretName: vault
+{{end}}

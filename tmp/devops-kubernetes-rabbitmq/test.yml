@@ -1,0 +1,18 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    run: tmp
+  name: tmp
+  namespace: rabbitmq
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: tmp
+    spec:
+      serviceAccountName: rabbitmq
+      containers:
+      - image: everpeace/curl-jq
+        name: tmp

@@ -1,0 +1,10 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{.namespace}}
+  labels:
+    app: rabbitmq
+    component: rabbitmq
+    role: services
+    istio-injection: enabled

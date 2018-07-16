@@ -1,0 +1,26 @@
+---
+namespace: "vault"
+url:
+  protocol: "https"
+  hostname: "vault.beamery.com"
+  secret_name: "prod-tls"
+
+lb:
+  ip: "35.199.55.135"
+
+vault:
+  image: "vault:0.10.0"
+  replicas: 3
+  dd_agent: "dd-agent.monitoring:8125"
+  storage: "beamery-vault-storage"
+  cpu_limit: 1000m
+  memory_limit: 1Gi
+  cpu_request: 500m
+  memory_request: 512Mi
+
+vault_init:
+  image: "us.gcr.io/beamery-global/vault-init:latest"
+  project: "beamery-global"
+  google_bucket: "beamery-vault-storage"
+  kms_id: "global/keyRings/vault/cryptoKeys/vault-init"
+  check_interval: "10"

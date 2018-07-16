@@ -1,0 +1,17 @@
+image: "rabbitmq:3.7-management"
+namespace: "rabbitmq"
+replica: "5"
+storage_size: "250Gi"
+storage_class: "fast-retain"
+vhost_name: "preview"
+heartbeat: "600"
+affinity_key: "services"
+affinity_selector: "rabbitmq"
+cookie: "dGVzdDEyMzQ="
+resources:
+  requests:
+    cpu: "300m"
+    memory: "1024Mi"
+  limits:
+    cpu: ""
+    memory: ""

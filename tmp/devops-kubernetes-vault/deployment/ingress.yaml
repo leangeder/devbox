@@ -1,0 +1,13 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: vault
+  namespace: vault
+spec:
+  rules:
+  - host: vault.beamery.local
+    http:
+      paths:
+      - backend:
+          serviceName: vault
+          servicePort: http

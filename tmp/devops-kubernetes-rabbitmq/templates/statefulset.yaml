@@ -1,0 +1,187 @@
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: rabbitmq
+  namespace: {{.namespace}}
+  labels:
+    app: rabbitmq
+    component: rabbitmq
+    role: services
+spec:
+  serviceName: {{ .namespace }}
+  replicas: {{ .replica }}
+  template:
+    metadata:
+      labels:
+        env: {{.env}}
+    spec:
+{{- if not .dev }}
+{{- if .affinity_key }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{.affinity_key}}
+                operator: In
+                values:
+                - {{.affinity_selector}}
+{{- end }}
+{{- end }}
+      serviceAccountName: rabbitmq
+      terminationGracePeriodSeconds: 10
+      initContainers:
+      - name: tmp
+        image: busybox
+        command:
+        - 'sh'
+        - '-c'
+        - >
+          wget -O /tmp/delay_plugin.zip https://dl.bintray.com/rabbitmq/community-plugins/3.7.x/rabbitmq_delayed_message_exchange/rabbitmq_delayed_message_exchange-20171201-3.7.x.zip;
+          unzip /tmp/delay_plugin.zip -d /tmp/rabbitmq;
+        volumeMounts:
+        - name: tmp-rabbitmq
+          mountPath: /tmp/rabbitmq
+      - name: vault-init
+        image: everpeace/curl-jq
+        command:
+        - /bin/sh
+        - -x
+        - /tmp/init.sh
+        env:
+        - name: VAULT_ADDR
+          value: "http://vault.vault:8200"
+        volumeMounts:
+        - name: rabbitmq-init
+          mountPath: /tmp/init.sh
+          subPath: init.sh
+        # - name: rabbitmq-definitions
+        #   mountPath: /etc/vault        
+        - name: rabbitmq-templates
+          mountPath: /tmp/tmpl_definitions.json
+          subPath: tmpl_definitions.json
+        - name: rabbitmq-definitions
+          mountPath: /tmp/rabbitmq-definitions
+      containers:
+      - name: rabbitmq
+        image: {{.image}}
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - "/bin/sh"
+              - "-c"
+              - >
+                 cp /tmp/rabbitmq/* /plugins/;
+        # command:
+        # - /bin/sh
+        # - -c
+        # - >
+        #   sleep infinity;
+        ports:
+        - name: http
+          containerPort: 15672
+        - name: tcp-dist
+          containerPort: 25672
+        - name: tcp-amqp
+          containerPort: 5672
+        - name: tcp-epmd
+          containerPort: 4369
+        # livenessProbe:
+        #   exec:
+        #     command: ["rabbitmqctl", "status"]
+        #   initialDelaySeconds: 10
+        #   timeoutSeconds: 10
+        # readinessProbe:
+        #   exec:
+        #     command: ["rabbitmqctl", "status"]
+        #   initialDelaySeconds: 10
+        #   timeoutSeconds: 10
+        env:
+        - name: MY_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: RABBITMQ_USE_LONGNAME
+          value: "true"
+        - name: RABBITMQ_ERLANG_COOKIE
+          valueFrom:
+            secretKeyRef:
+              name: cookie
+              key: rabbitmq.cookie
+        - name: RABBITMQ_NODENAME
+          # value: "rabbit@localhost"
+          value: "rabbit@$(MY_POD_IP)"
+        - name: AUTOCLUSTER_TYPE
+          value: "k8s"
+        - name: AUTOCLUSTER_DELAY
+          value: "10"
+        - name: AUTOCLUSTER_CLEANUP
+          value: "true"
+        - name: CLEANUP_WARN_ONLY
+          value: "false"
+        resources:
+          requests:
+{{- if ne .resources.requests.memory "" }}
+            memory: "{{ .resources.requests.memory }}"
+{{- end }}
+{{- if ne .resources.requests.cpu "" }}
+            cpu: "{{ .resources.requests.cpu }}"
+{{- end }}
+          limits:
+{{- if ne .resources.limits.memory "" }}
+            memory: "{{ .resources.limits.memory }}"
+{{- end }}
+{{- if ne .resources.limits.cpu "" }}
+            cpu: "{{ .resources.limits.cpu }}"
+{{- end }}
+        volumeMounts:
+        - name: rabbitmq-configs
+          mountPath: /etc/rabbitmq
+        - name: rabbitmq-definitions
+          mountPath: /tmp/rabbitmq-definitions
+        - name: data
+          mountPath: /var/lib/rabbitmq
+          subPath: rabbitmq
+        - name: tmp-rabbitmq
+          mountPath: /tmp/rabbitmq
+      volumes:
+      - name: tmp-rabbitmq
+        emptyDir: {}
+      - name: rabbitmq-definitions
+        emptyDir: {}
+      - name: rabbitmq-configs
+        configMap:
+          name: rabbitmq-config
+          items:
+          - key: rabbitmq.conf
+            path: rabbitmq.conf
+          - key: enabled_plugins
+            path: enabled_plugins
+      - name: rabbitmq-templates
+        configMap:
+          name: rabbitmq-config
+          items:
+          - key: rabbitmq.definitions
+            path: tmpl_definitions.json
+      - name: rabbitmq-init
+        configMap:
+          name: rabbitmq-config
+          items:
+          - key: init.sh
+            path: init.sh
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        app: volume
+        component: rabbitmq
+        role: services
+    spec:
+      accessModes:
+      - "ReadWriteOnce"
+      storageClassName: {{.storage_class}}
+      resources:
+        requests:
+          storage: {{.storage_size}}
