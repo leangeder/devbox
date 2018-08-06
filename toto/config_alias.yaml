@@ -1,0 +1,13 @@
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alias
+  # namespace: dev
+data:
+  host.aliases: |
+    beamery.local mongodb.mongodb.svc.cluster.local
+    beamery.local redis-cluster.redis.svc.cluster.local
+    beamery.local rabbitmq.rabbitmq.svc.cluster.local
+    beamery.local elasticsearch.elasticsearch.svc.cluster.local

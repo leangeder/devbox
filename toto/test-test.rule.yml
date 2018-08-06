@@ -1,0 +1,612 @@
+# ---
+# apiVersion: "authentication.istio.io/v1alpha1"
+# kind: "Policy"
+# metadata:
+#   name: "example-1"
+#   namespace: istio-system
+# spec:
+#   peers:
+#   - mtls:
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: istio-ingressgateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+  - port:
+      number: 9089
+      name: http-app-site-ng2
+      protocol: HTTP
+    hosts:
+    - "beamery.local"
+    - "api.beamery.local"
+  - port:
+      number: 9001
+      name: http-app-bath
+      protocol: HTTP
+    hosts:
+    - "app.beamery.local"
+  - port:
+      number: 2505
+      name: http-app-admin
+      protocol: HTTP
+    hosts:
+    - "admin.beamery.local"
+# # ---
+# # apiVersion: networking.istio.io/v1alpha3
+# # kind: ServiceEntry
+# # metadata:
+# #   name: beamery
+# #   namespace: istio-system
+# # spec:
+# #   hosts:
+# #   - beamery.local
+# #   ports:
+# #   - name: http-elasticsearch
+# #     number: 9200
+# #     protocol: HTTP
+# #   - name: mongo-client-tata
+# #     number: 27017
+# #     protocol: MONGO
+# #   - name: redis-client-tata
+# #     number: 6379
+# #     protocol: REDIS
+# #   - name: tcp-rabbitmq
+# #     number: 5672
+# #     protocol: TCP
+# #   location: MESH_EXTERNAL
+# #   resolution: DNS
+# #   endpoints:
+# #   - address: elasticsearch.elasticsearch.svc.cluster.local
+# #     ports:
+# #       http-elasticsearch: 9200
+# #   - address: mongodb.mongodb.svc.cluster.local
+# #     ports:
+# #       mongo-client-tata: 27017
+# #     labels:
+# #       app: mongodb
+# #   - address: redis-cluster.redis.svc.cluster.local
+# #     ports:
+# #       redis-client-tata: 6379
+# #   - address: rabbitmq.rabbitmq.svc.cluster.local
+# #     ports:
+# #       tcp-rabbitmq: 5672
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: ServiceEntry
+# metadata:
+#   name: mongodb
+#   namespace: istio-system
+# spec:
+#   hosts:
+#   - mongodb.mongodb
+#   # - beamery.local
+#   ports:
+#   - name: mongo-client-tata
+#     number: 27017
+#     protocol: MONGO
+#   location: MESH_EXTERNAL
+#   resolution: DNS
+#   endpoints:
+#   - address: mongodb.mongodb.svc.cluster.local
+#     ports:
+#       mongo-client-tata: 27017
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: ServiceEntry
+# metadata:
+#   name: elasticsearch
+#   namespace: istio-system
+# spec:
+#   hosts:
+#   - elasticsearch.elasticsearch
+#   # - beamery.local
+#   ports:
+#   - name: http-elasticsearch
+#     number: 9200
+#     protocol: HTTP
+#   location: MESH_EXTERNAL
+#   resolution: DNS
+#   endpoints:
+#   - address: elasticsearch.elasticsearch.svc.cluster.local
+#     ports:
+#       http-elasticsearch: 9200
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: ServiceEntry
+# metadata:
+#   name: redis
+#   namespace: istio-system
+# spec:
+#   hosts:
+#   - redis-cluster.redis
+#   # - beamery.local
+#   ports:
+#   - name: redis-client-tata
+#     number: 6379
+#     protocol: REDIS
+#   location: MESH_EXTERNAL
+#   resolution: DNS
+#   endpoints:
+#   - address: redis-cluster.redis.svc.cluster.local
+#     ports:
+#       redis-client-tata: 6379
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: ServiceEntry
+# metadata:
+#   name: rabbitmq
+#   namespace: istio-system
+# spec:
+#   hosts:
+#   - rabbitmq.rabbitmq
+#   # - beamery.local
+#   ports:
+#   - name: tcp-rabbitmq
+#     number: 5672
+#     protocol: TCP
+#   location: MESH_EXTERNAL
+#   resolution: DNS
+#   endpoints:
+#   - address: rabbitmq.rabbitmq.svc.cluster.local
+#     ports:
+#       tcp-rabbitmq: 5672
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: VirtualService
+# metadata:
+#   name: beamery
+#   namespace: istio-system
+# spec:
+#   hosts:
+#   # - beamery.local
+#   - redis
+#   tcp:
+#   - match:
+#     - port: 27017
+#     route:
+#     - destination:
+#         host: mongodb.mongodb.svc.cluster.local
+#         port:
+#           number: 27017
+#   tcp:
+#   - match:
+#     - port: 6379
+#     route:
+#     - destination:
+#         host: redis-cluster.redis.svc.cluster.local
+#         port:
+#           number: 6379
+#   tcp:
+#   - match:
+#     - port: 5672
+#     route:
+#     - destination:
+#         host: rabbitmq.rabbitmq.svc.cluster.local
+#         port:
+#           number: 5672
+#   http:
+#   - match:
+#     - port: 9200
+#     route:
+#     - destination:
+#         host: elasticsearch.elasticsearch.svc.cluster.local
+#         port:
+#           number: 9200
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: DestinationRule
+# metadata:
+#   name: beamery
+#   namespace: istio-system
+# spec:
+#   host: beamery.local
+#   trafficPolicy:
+#     tls:
+#       # mode: ISTIO_MUTUAL
+#       mode: DISABLE
+#     # loadBalancer:
+#     #   simple: LEAST_CONN
+#     connectionPool:
+#       tcp:
+#         maxConnections: 10000000
+#         connectTimeout: 30ms
+#     # portLevelSettings:
+#     # - port:
+#     #     number: 27017
+#     #   tls:
+#     #     mode: DISABLE
+#     # - port:
+#     #     number: 6379
+#     #   tls:
+#     #     mode: DISABLE
+#     # - port:
+#     #     number: 5672
+#     #   tls:
+#     #     mode: DISABLE
+#     # - port:
+#     #     number: 9200
+#     #   tls:
+#     #     mode: DISABLE
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: DestinationRule
+# metadata:
+#   name: beamery-test
+#   namespace: istio-system
+# spec:
+#   host: api.beamery.local
+#   trafficPolicy:
+#     tls:
+#       # mode: ISTIO_MUTUAL
+#       mode: DISABLE
+#     # loadBalancer:
+#     #   simple: LEAST_CONN
+#     connectionPool:
+#       tcp:
+#         maxConnections: 10000000
+#         connectTimeout: 30ms
+#     # portLevelSettings:
+#     # - port:
+#     #     number: 27017
+#     #   tls:
+#     #     mode: DISABLE
+#     # - port:
+#     #     number: 6379
+#     #   tls:
+#     #     mode: DISABLE
+#     # - port:
+#     #     number: 5672
+#     #   tls:
+#     #     mode: DISABLE
+#     # - port:
+#     #     number: 9200
+#     #   tls:
+#     #     mode: DISABLE
+# 
+# 
+# 
+###############################################################################################################################################################################################################
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: mozilla
+  namespace: istio-system
+spec:
+  hosts:
+  - mxr.mozilla.org
+  - hg.mozilla.org
+  - storage.googleapis.com
+  ports:
+  - name: http
+    number: 80
+    protocol: HTTP
+  - name: https
+    number: 443
+    protocol: HTTPS
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: mongo
+  namespace: istio-system
+spec:
+  hosts:
+  - "mongo.dev"
+  - "mongo-01.beamery.local"
+  - "mongo-01.beamery.local:27017"
+  gateways:
+  - mesh
+  tcp:
+  - match:
+    - port: 27017
+      sourceSubnet: "172.17.16.0/24"
+    route:
+    - destination:
+        host: mongodb.mongodb.svc.cluster.local
+        port:
+          number: 27017
+  # tcp:
+  # - match:
+  #   - port: 27018
+  #     sourceSubnet: "172.17.16.0/24"
+  #   route:
+  #   - destination:
+  #       host: mongodb.mongodb.svc.cluster.local
+  #       port:
+  #         number: 27018
+  # tcp:
+  # - match:
+  #   - port: 27019
+  #     sourceSubnet: "172.17.16.0/24"
+  #   route:
+  #   - destination:
+  #       host: mongodb.mongodb.svc.cluster.local
+  #       port:
+  #         number: 27019
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: mongo
+  namespace: istio-system
+spec:
+  host: mongodb.mongodb.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: rabbitmq
+  namespace: istio-system
+spec:
+  hosts:
+  - "rabbitmq.dev"
+  - "rabbit.beamery.local"
+  - "rabbit.beamery.local:5672"
+  tcp:
+  - match:
+    - port: 5672
+      sourceSubnet: "172.17.16.0/24"
+    route:
+    - destination:
+        host: rabbitmq.rabbitmq.svc.cluster.local
+        port:
+          number: 5672
+  # tcp:
+  # - match:
+  #   - port: 25672
+  #     sourceSubnet: "172.17.16.0/24"
+  #   route:
+  #   - destination:
+  #       host: rabbitmq.rabbitmq.svc.cluster.local
+  #       port:
+  #         number: 25672
+  # http:
+  # - match:
+  #   - port: 15672
+  #   route:
+  #   - destination:
+  #       host: rabbitmq.rabbitmq.svc.cluster.local
+  #       port:
+  #         number: 15672
+  # tcp:
+  # - match:
+  #   - port: 4369
+  #     sourceSubnet: "172.17.16.0/24"
+  #   route:
+  #   - destination:
+  #       host: rabbitmq.rabbitmq.svc.cluster.local
+  #       port:
+  #         number: 4369
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: rabbitmq
+  namespace: istio-system
+spec:
+  host: rabbitmq.rabbitmq.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: elasticsearch
+  namespace: istio-system
+spec:
+  hosts:
+  - "elasticsearch.dev"
+  - "es-01.beamery.local"
+  - "es-01.beamery.local:9200"
+  http:
+  - match:
+    - port: 9200
+    route:
+    - destination:
+        host: elasticsearch.elasticsearch.svc.cluster.local
+        port:
+          number: 9200
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: DestinationRule
+# metadata:
+#   name: elasticsearch
+#   namespace: istio-system
+# spec:
+#   host: elasticsearch.elasticsearch.svc.cluster.local
+#   trafficPolicy:
+#     tls:
+#       mode: DISABLE
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: redis 
+  namespace: istio-system
+spec:
+  hosts:
+  - "redis.dev"
+  - "redis-01.beamery.local"
+  - "redis-01.beamery.local:6379"
+  gateways:
+  - mesh
+  tcp:
+  - match:
+    - port: 6379
+      sourceSubnet: "172.17.16.0/24"
+    route:
+    - destination:
+        host: redis-cluster.redis.svc.cluster.local
+        port:
+          number: 6379
+  # tcp:
+  # - match:
+  #   - port: 16379
+  #     sourceSubnet: "172.17.16.0/24"
+  #   route:
+  #   - destination:
+  #       host: redis-cluster.redis.svc.cluster.local
+  #       port:
+  #         number: 16379
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: redis
+  namespace: istio-system
+spec:
+  host: redis-cluster.redis.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+########################################################################################################
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: app-site-ng2
+  namespace: istio-system
+spec:
+  hosts:
+  - "beamery.local"
+  - "beamery.local:9089"
+  gateways:
+  - istio-ingressgateway
+  http:
+  - route:
+    - destination:
+        host: app-site-ng2.dev.svc.cluster.local
+        port:
+          number: 80
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: app-bath
+  namespace: istio-system
+spec:
+  hosts:
+  - "app.beamery.local"
+  - "app.beamery.local:9001"
+  gateways:
+  - istio-ingressgateway
+  http:
+  - route:
+    - destination:
+        host: app-bath.dev.svc.cluster.local
+        port:
+          number: 80
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: api-core
+  namespace: istio-system
+spec:
+  hosts:
+  - "api.beamery.local"
+  - "api.beamery.local:9089"
+  - "api-core"
+  - "api-core:9089"
+  gateways:
+  - istio-ingressgateway
+  - mesh
+  http:
+  - route:
+    - destination:
+        host: api-core.dev.svc.cluster.local
+        port:
+          number: 80
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: app-admin
+  namespace: istio-system
+spec:
+  hosts:
+  - "admin.beamery.local"
+  - "admin.beamery.local:2505"
+  gateways:
+  - istio-ingressgateway
+  - mesh
+  http:
+  - route:
+    - destination:
+        host: app-admin.dev.svc.cluster.local
+        port:
+          number: 80
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: portal
+  namespace: istio-system
+spec:
+  hosts:
+  - "api-portal"
+  - "api-portal:9088"
+  gateways:
+  - istio-ingressgateway
+  - mesh
+  http:
+  - route:
+    - destination:
+        host: api-portal.dev.svc.cluster.local
+        port:
+          number: 80
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: mail
+  namespace: istio-system
+spec:
+  hosts:
+  - "api-mail"
+  - "api-mail:2501"
+  gateways:
+  - istio-ingressgateway
+  - mesh
+  http:
+  - route:
+    - destination:
+        host: api-mail.dev.svc.cluster.local
+        port:
+          number: 80
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: notification
+  namespace: istio-system
+spec:
+  hosts:
+  - "api-notifications"
+  - "api-notifications:8000"
+  gateways:
+  - istio-ingressgateway
+  - mesh
+  http:
+  - route:
+    - destination:
+        host: api-notifications.dev.svc.cluster.local
+        port:
+          number: 80

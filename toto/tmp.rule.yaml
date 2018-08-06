@@ -1,0 +1,30 @@
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: tmp
+  namespace: istio-system
+spec:
+  hosts:
+  - nginx.org
+  - security.debian.org
+  - deb.debian.org
+  - deb.nodesource.com
+  - cdn-fastly.deb.debian.org
+  - bootstrap.pypa.io
+  - pypi.org
+  - files.pythonhosted.org
+  - raw.githubusercontent.com
+  - download.redis.io
+  - github.com
+  - archive.ubuntu.com
+  - security.ubuntu.com
+  # - "*.ubuntu.com"
+  ports:
+  - name: http
+    number: 80
+    protocol: HTTP
+  - name: https
+    number: 443
+    protocol: HTTPS
+  resolution: DNS

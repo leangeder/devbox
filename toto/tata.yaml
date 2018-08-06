@@ -1,0 +1,46 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: local
+  labels:
+    app: beamery
+    # istio-injection: enabled
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: beamery
+  namespace: local
+  labels:
+    app: beamery
+spec:
+  ports:
+  - name: fake
+    port: 1234
+  # - name: tcp-mongo
+  #   port: 27017
+  #   protocol: TCP
+  selector:
+    app: tmp
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: tmp
+  namespace: local
+  labels:
+    app: tmp
+spec:
+  template:
+    metadata:
+      labels:
+        app: tmp
+    spec:
+      containers:
+      - name: tmp
+        image: tutum/curl
+        command: ["/bin/sleep","infinity"]
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 1234

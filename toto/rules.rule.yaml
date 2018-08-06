@@ -1,0 +1,93 @@
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: app-site-ng2
+  # namespace: {{.namespace}}
+  namespace: istio-system
+spec:
+  hosts:
+  - beamery.local
+  gateways:
+  - gateway-apps-api
+  http:
+  - route:
+    - destination:
+        host: app-site-ng2.dev.svc.cluster.local
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: api-core
+  # namespace: {{.namespace}}
+  namespace: istio-system
+spec:
+  hosts:
+  - api.beamery.local
+  gateways:
+  - gateway-apps-api
+  http:
+  - match:
+    - port: 80
+    route:
+    - destination:
+        host: api-core.dev.svc.cluster.local
+        port:
+          number: 9089
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: VirtualService
+# metadata:
+#   name: portal
+#   namespace: {{.namespace}}
+# spec:
+#   hosts:
+#   - api-portal
+#   gateways:
+#   - mesh
+#   http:
+#   - match:
+#     - port: 80
+#     route:
+#     - destination:
+#         host: api-portal.dev.svc.cluster.local
+#         port:
+#           number: 9088
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: VirtualService
+# metadata:
+#   name: mail
+#   namespace: {{.namespace}}
+# spec:
+#   hosts:
+#   - api-mail
+#   gateways:
+#   - mesh
+#   http:
+#   - match:
+#     - port: 80
+#     route:
+#     - destination:
+#         host: api-mail.dev.svc.cluster.local
+#         port:
+#           number: 2501
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: VirtualService
+# metadata:
+#   name: notification
+#   namespace: {{.namespace}}
+# spec:
+#   hosts:
+#   - api-notifications
+#   gateways:
+#   - mesh
+#   http:
+#   - match:
+#     - port: 80
+#     route:
+#     - destination:
+#         host: api-notifications.dev.svc.cluster.local
+#         port:
+#           number: 8000

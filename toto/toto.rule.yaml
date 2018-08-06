@@ -1,0 +1,465 @@
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: mozilla
+  namespace: istio-system
+  # namespace: {{.namespace}}
+spec:
+  hosts:
+  - mxr.mozilla.org
+  - hg.mozilla.org
+  - storage.googleapis.com
+  ports:
+  - name: http
+    number: 80
+    protocol: HTTP
+  - name: https
+    number: 443
+    protocol: HTTPS
+  resolution: DNS
+# # ##########################################################################################
+# # ---
+# # apiVersion: networking.istio.io/v1alpha3
+# # kind: VirtualService
+# # metadata:
+# #   name: mongodb
+# #   namespace: istio-system
+# #   # namespace: {{.namespace}}
+# # spec:
+# #   hosts:
+# #   # - mongodb.mongodb.svc.cluster.local
+# #   - beamery.local
+# #   # - "beamery.local:27017"
+# #   gateways:
+# #   - mesh
+# #   tcp:
+# #   - match:
+# #     - port: 27017
+# #       sourceSubnet: "172.17.16.0/24"
+# #     route:
+# #     - destination:
+# #         host: mongodb.mongodb.svc.cluster.local
+# #         port:
+# #           number: 27017
+# #   tcp:
+# #   - match:
+# #     - port: 27018
+# #       sourceSubnet: "172.17.16.0/24"
+# #     route:
+# #     - destination:
+# #         host: mongodb.mongodb.svc.cluster.local
+# #         port:
+# #           number: 27018
+# #   tcp:
+# #   - match:
+# #     - port: 27019
+# #       sourceSubnet: "172.17.16.0/24"
+# #     route:
+# #     - destination:
+# #         host: mongodb.mongodb.svc.cluster.local
+# #         port:
+# #           number: 27019
+# # ---
+# # apiVersion: networking.istio.io/v1alpha3
+# # kind: DestinationRule
+# # metadata:
+# #   name: mongodb
+# #   namespace: istio-system
+# #   # namespace: {{.namespace}}
+# # spec:
+# #   host: mongodb.mongodb.svc.cluster.local
+# #   trafficPolicy:
+# #     tls:
+# #       mode: DISABLE
+# # ---
+# # apiVersion: networking.istio.io/v1alpha3
+# # kind: VirtualService
+# # metadata:
+# #   name: rabbitmq
+# #   namespace: istio-system
+# #   # namespace: {{.namespace}}
+# # spec:
+# #   hosts:
+# #   # - rabbitmq.rabbitmq.svc.cluster.local
+# #   - beamery.local
+# #   # - beamery.local:5672
+# #   tcp:
+# #   - match:
+# #     - port: 5672
+# #       sourceSubnet: "172.17.16.0/24"
+# #     route:
+# #     - destination:
+# #         host: rabbitmq.rabbitmq.svc.cluster.local
+# #         port:
+# #           number: 5672
+# #   tcp:
+# #   - match:
+# #     - port: 25672
+# #       sourceSubnet: "172.17.16.0/24"
+# #     route:
+# #     - destination:
+# #         host: rabbitmq.rabbitmq.svc.cluster.local
+# #         port:
+# #           number: 25672
+# #   http:
+# #   - match:
+# #     - port: 15672
+# #     route:
+# #     - destination:
+# #         host: rabbitmq.rabbitmq.svc.cluster.local
+# #         port:
+# #           number: 15672
+# #   tcp:
+# #   - match:
+# #     - port: 4369
+# #       sourceSubnet: "172.17.16.0/24"
+# #     route:
+# #     - destination:
+# #         host: rabbitmq.rabbitmq.svc.cluster.local
+# #         port:
+# #           number: 4369
+# # ---
+# # apiVersion: networking.istio.io/v1alpha3
+# # kind: DestinationRule
+# # metadata:
+# #   name: rabbitmq
+# #   namespace: istio-system
+# #   # namespace: {{.namespace}}
+# # spec:
+# #   host: rabbitmq.rabbitmq.svc.cluster.local
+# #   trafficPolicy:
+# #     tls:
+# #       mode: DISABLE
+# # ---
+# # apiVersion: networking.istio.io/v1alpha3
+# # kind: VirtualService
+# # metadata:
+# #   name: elasticsearch
+# #   namespace: istio-system
+# #   # namespace: {{.namespace}}
+# # spec:
+# #   hosts:
+# #   # - elasticsearch.elasticsearch.svc.cluster.local
+# #   - beamery.local
+# #   # - beamery.local:9200
+# #   http:
+# #   - match:
+# #     - port: 9200
+# #     route:
+# #     - destination:
+# #         host: elasticsearch.elasticsearch.svc.cluster.local
+# #         port:
+# #           number: 9200
+# # ---
+# # apiVersion: networking.istio.io/v1alpha3
+# # kind: DestinationRule
+# # metadata:
+# #   name: elasticsearch
+# #   namespace: istio-system
+# #   # namespace: {{.namespace}}
+# # spec:
+# #   host: elasticsearch.elasticsearch.svc.cluster.local
+# #   trafficPolicy:
+# #     tls:
+# #       mode: DISABLE
+# # ---
+# # apiVersion: networking.istio.io/v1alpha3
+# # kind: VirtualService
+# # metadata:
+# #   name: redis 
+# #   namespace: istio-system
+# #   # namespace: {{.namespace}}
+# # spec:
+# #   hosts:
+# #   # - redis-cluster.redis.svc.cluster.local
+# #   - beamery.local
+# #   # - beamery.local:6379
+# #   gateways:
+# #   - mesh
+# #   tcp:
+# #   - match:
+# #     - port: 6379
+# #       sourceSubnet: "172.17.16.0/24"
+# #     route:
+# #     - destination:
+# #         host: redis-cluster.redis.svc.cluster.local
+# #         port:
+# #           number: 6379
+# #   tcp:
+# #   - match:
+# #     - port: 16379
+# #       sourceSubnet: "172.17.16.0/24"
+# #     route:
+# #     - destination:
+# #         host: redis-cluster.redis.svc.cluster.local
+# #         port:
+# #           number: 16379
+# # ---
+# # apiVersion: networking.istio.io/v1alpha3
+# # kind: DestinationRule
+# # metadata:
+# #   name: redis
+# #   namespace: istio-system
+# #   # namespace: {{.namespace}}
+# # spec:
+# #   host: redis-cluster.redis.svc.cluster.local
+# #   trafficPolicy:
+# #     tls:
+# #       mode: DISABLE
+# # ##########################################################################################
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: Gateway
+# metadata:
+#   name: gateway-apps-api
+#   namespace: istio-system
+#   # namespace: {{.namespace}}
+# spec:
+#   selector:
+#     istio: ingressgateway
+#   servers:
+#   - port:
+#       number: 80
+#       name: http
+#       protocol: HTTP
+#     hosts:
+#     - "*"
+#     # - beamery.local
+#     # - admin.beamery.local
+#     # - app.beamery.local
+#     # - api.beamery.local
+#   - port:
+#       number: 9089
+#       name: http
+#       # name: http-app-site-ng2
+#       protocol: HTTP
+#     hosts:
+#     - beamery.local
+#     - api.beamery.local
+#   - port:
+#       number: 9001
+#       name: http-app-bath
+#       protocol: HTTP
+#     hosts:
+#     - app.beamery.local
+#   - port:
+#       number: 2505
+#       name: http-app-admin
+#       protocol: HTTP
+#     hosts:
+#     - admin.beamery.local
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: VirtualService
+# metadata:
+#   name: app-site-ng2
+#   namespace: istio-system
+#   # namespace: {{.namespace}}
+# spec:
+#   hosts:
+#   - beamery.local
+#   gateways:
+#   - gateway-apps-api
+#   - mesh
+#   http:
+#   - match:
+#     - port: 9089
+#     route:
+#     - destination:
+#         host: app-site-ng2.dev.svc.cluster.local
+#         port:
+#           number: 80
+#   http:
+#   - match:
+#     - port: 80
+#     route:
+#     - destination:
+#         host: app-site-ng2.dev.svc.cluster.local
+#         port:
+#           number: 80
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: VirtualService
+# metadata:
+#   name: app-bath
+#   namespace: istio-system
+#   # namespace: {{.namespace}}
+# spec:
+#   hosts:
+#   - app.beamery.local
+#   gateways:
+#   - gateway-apps-api
+#   - mesh
+#   http:
+#   - match:
+#     - port: 9001
+#     route:
+#     - destination:
+#         host: app-bath.dev.svc.cluster.local
+#         port:
+#           number: 9001
+#   http:
+#   - match:
+#     - port: 80
+#     route:
+#     - destination:
+#         host: app-bath.dev.svc.cluster.local
+#         port:
+#           number: 9001
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: VirtualService
+# metadata:
+#   name: api-core
+#   namespace: istio-system
+#   # namespace: {{.namespace}}
+# spec:
+#   hosts:
+#   - api.beamery.local
+#   - api-core
+#   gateways:
+#   - gateway-apps-api
+#   - mesh
+#   http:
+#   - match:
+#     - port: 80
+#     route:
+#     - destination:
+#         host: api-core.dev.svc.cluster.local
+#         port:
+#           number: 9089
+#   http:
+#   - match:
+#     - port: 9089
+#     rewrite:
+#       uri: :80
+#     route:
+#     - destination:
+#         host: api-core.dev.svc.cluster.local
+#         port:
+#           number: 9089
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: VirtualService
+# metadata:
+#   name: app-admin
+#   namespace: istio-system
+#   # namespace: {{.namespace}}
+# spec:
+#   hosts:
+#   - admin.beamery.local
+#   gateways:
+#   - gateway-apps-api
+#   - mesh
+#   http:
+#   - match:
+#     - port: 2505
+#     route:
+#     - destination:
+#         host: app-admin.dev.svc.cluster.local
+#         port:
+#           number: 2505
+#   http:
+#   - match:
+#     - port: 80
+#     route:
+#     - destination:
+#         host: app-admin.dev.svc.cluster.local
+#         port:
+#           number: 2505
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: VirtualService
+# metadata:
+#   name: portal
+#   namespace: istio-system
+#   # namespace: {{.namespace}}
+# spec:
+#   hosts:
+#   - api-portal
+#   gateways:
+#   - mesh
+#   http:
+#   - match:
+#     - port: 9088
+#     route:
+#     - destination:
+#         host: api-portal.dev.svc.cluster.local
+#         port:
+#           number: 9088
+#   http:
+#   - match:
+#     - port: 9088
+#     route:
+#     - destination:
+#         host: api-portal.dev.svc.cluster.local
+#         port:
+#           number: 9088
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: VirtualService
+# metadata:
+#   name: mail
+#   namespace: istio-system
+#   # namespace: {{.namespace}}
+# spec:
+#   hosts:
+#   - api-mail
+#   gateways:
+#   - mesh
+#   http:
+#   - match:
+#     - port: 2501
+#     route:
+#     - destination:
+#         host: api-mail.dev.svc.cluster.local
+#         port:
+#           number: 2501
+#   http:
+#   - match:
+#     - port: 80
+#     route:
+#     - destination:
+#         host: api-mail.dev.svc.cluster.local
+#         port:
+#           number: 2501
+# ---
+# apiVersion: networking.istio.io/v1alpha3
+# kind: VirtualService
+# metadata:
+#   name: notification
+#   namespace: istio-system
+#   # namespace: {{.namespace}}
+# spec:
+#   hosts:
+#   - api-notifications
+#   gateways:
+#   - mesh
+#   http:
+#   - match:
+#     - port: 8000
+#     route:
+#     - destination:
+#         host: api-notifications.dev.svc.cluster.local
+#         port:
+#           number: 8000
+#   http:
+#   - match:
+#     - port: 80
+#     route:
+#     - destination:
+#         host: api-notifications.dev.svc.cluster.local
+#         port:
+#           number: 8000
+# ##########################################################################################
+# ---
+# apiVersion: authentication.istio.io/v1alpha1
+# kind: Policy
+# metadata:
+#   name: policy-default
+#   namespace: istio-system
+#   # namespace: {{.namespace}}
+# spec:
+#   peers:
+#   - mtls:
